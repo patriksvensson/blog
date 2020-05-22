@@ -11,7 +11,8 @@ namespace site.Pipelines
             ProcessModules = new ModuleList
             {
                 new CopyFiles("./assets/{css,favicon,fonts,images,js}/**/*", "*.{png,ico,webmanifest}"),
-                new CopyFiles("./images/**/*", "*.{png,jpg}")
+                new CopyFiles("./images/**/*", "*.{png,jpg}"),
+                new CopyFiles("./CNAME", "CNAME"),
             };
         }
     }
