@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - How to write a stateful Roslyn analyzer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - How to write a stateful Roslyn analyzer" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2020/03/how-to-write-a-stateful-roslyn-analyzer" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>How to write a stateful Roslyn analyzer</h1>
+    <p><em>Published on Saturday, March 7, 2020</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/net" class="button small ">.NET</a></li>
+        <li><a role="button" href="/tags/csharp" class="button small ">C#</a></li>
+        <li><a role="button" href="/tags/roslyn" class="button small ">Roslyn</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>I wrote a stateful Roslyn analyzer a couple of days ago to analyze the codebase
+at work for irregularities, and I thought I would share my findings on how I did
+it.</p>
+<h2 id="the-goal">The goal</h2>
+<p>Our goal for this blog post is to write an analyzer that finds all non-abstract
+classes that implement <code>IRequest&lt;TResult&gt;</code>, and check whether or not they have
+an associated request handler <code>RequestHandler&lt;TRequest, TResult&gt;</code>.</p>
+<p>The algorithm for our analyzer is kind of straight forward.</p>
+<ol>
+<li>Find all non-abstract classes that implement <code>IRequest&lt;TResult&gt;</code></li>
+<li>Find all non-abstract classes that inherit from <code>RequestHandler&lt;TRequest, TResult&gt;</code></li>
+<li>Once the compilation finished, find all requests that don't have a handler
+and report a diagnostic for each of them.</li>
+</ol>
+<p>We won't cover the actual setup of the analyzer project, but head over to
+<a href="https://devblogs.microsoft.com/dotnet/how-to-write-a-roslyn-analyzer">https://devblogs.microsoft.com/dotnet/how-to-write-a-roslyn-analyzer</a> and follow
+Mika's excellent tutorial on this and comes back after that. I'll wait.</p>
+<h2 id="setting-everything-up">Setting everything up</h2>
+<p>Ok, now, when you've got a project set up, let's create the boilerplate for the
+request analyzer. Start by removing any existing analyzers and code fixes from the
+project and create a new analyzer.</p>
+<pre><code class="language-csharp">using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
+
+namespace RequestAnalyzer
+{
+    [DiagnosticAnalyzer(LanguageNames.CSharp)]
+    public class RequestAnalyzer : DiagnosticAnalyzer
+    {
+        public const string DiagnosticId = &quot;RequestAnalyzer&quot;;
+        private static DiagnosticDescriptor Rule = new DiagnosticDescriptor(
+            DiagnosticId, &quot;Request does not have an associated handler&quot;,
+            &quot;The request '{0}' does not have an associated handler.&quot;, &quot;Maintenance&quot;,
+            DiagnosticSeverity.Warning, isEnabledByDefault: true,
+            description: &quot;Requests should have an associated handler&quot;);
+
+        public override ImmutableArray&lt;DiagnosticDescriptor&gt; SupportedDiagnostics
+        {
+            get { return ImmutableArray.Create(Rule); }
+        }
+
+        public override void Initialize(AnalysisContext analysisContext)
+        {
+            analysisContext.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze);
+            analysisContext.EnableConcurrentExecution();
+            analysisContext.RegisterCompilationStartAction(Analyze);
+        }
+
+        private void Analyze(CompilationStartAnalysisContext startContext)
+        {
+        }
+    }
+}
+</code></pre>
+<p>Once we have all the boilerplate in place, we'll create a test that will verify that
+our analyzer works as expected.</p>
+<pre><code class="language-csharp">[TestClass]
+public class UnitTest : CodeFixVerifier
+{
+    protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
+    {
+        return new RequestAnalyzer();
+    }
+
+    [TestMethod]
+    public void Should_Return_Diagnostic_For_Missing_Command_Handler()
+    {
+        var test = &#64;&quot;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics;
+
+namespace Foo
+{
+    public interface IRequest&lt;TResult&gt;
+    {
+    }
+
+    public sealed class MyRequest : IRequest&lt;int&gt;
+    {
+    }
+
+    public abstract class AbstractRequest : IRequest&lt;int&gt;
+    {
+    }
+
+    public sealed class MyOtherRequest : IRequest&lt;int&gt;
+    {
+    }
+
+    public sealed class MyRequestHandler : RequestHandler&lt;MyRequest, int&gt;
+    {
+    }
+}&quot;;
+        var expected = new DiagnosticResult
+        {
+            Id = &quot;RequestAnalyzer&quot;,
+            Message = &quot;The request 'MyOtherRequest' does not have an associated handler.&quot;,
+            Severity = DiagnosticSeverity.Warning,
+            Locations =
+                new[] {
+                        new DiagnosticResultLocation(&quot;Test0.cs&quot;, 23, 29)
+                    }
+        };
+
+        VerifyCSharpDiagnostic(test, expected);
+    }
+}
+</code></pre>
+<p>The test will set up the source code that will be analyzed and some expectations.
+Notice that we need to specify the <code>IRequest&lt;TResult&gt;</code> definition in our code.
+When Roslyn encounters an unknown type during a diagnostic run, it will assume
+it's a type, so by specifying this, Roslyn will know that it's an interface.</p>
+<h2 id="writing-the-actual-analyzer">Writing the actual analyzer</h2>
+<p>So, the first step is finding the requests and the request handlers and store
+them somewhere. For this, we'll register a callback that will be called every
+time the semantic analysis of a class, enum, or interface has been completed. In
+the callback, we will check if the type fits the criteria and store it in a
+<code>ConcurrentBag</code>.</p>
+<pre><code>private void Analyze(CompilationStartAnalysisContext startContext)
+{
+    var handlers = new ConcurrentBag&lt;INamedTypeSymbol&gt;();
+    var requests = new ConcurrentBag&lt;INamedTypeSymbol&gt;();
+
+    startContext.RegisterSymbolAction(context =&gt;
+    {
+        var type = (INamedTypeSymbol)context.Symbol;
+        if (type.TypeKind == TypeKind.Class)
+        {
+            if (type.IsAbstract || type.IsStatic)
+            {
+                return;
+            }
+
+            // Is this a request handler?
+            if (type.BaseType != null &amp;&amp; type.BaseType.Name == &quot;RequestHandler&quot; &amp;&amp;
+                type.BaseType.TypeArguments.Length == 2)
+            {
+                handlers.Add(type);
+            }
+            // Is this a request?
+            else if (type.Interfaces.Any(x =&gt; x.Name == &quot;IRequest&quot; &amp;&amp; x.TypeArguments.Length == 1))
+            {
+                requests.Add(type);
+            }
+        }
+    }, SymbolKind.NamedType);
+}
+</code></pre>
+<p>Now when we have all the information we need, we need to perform our actual
+analysis of the data we've collected. For this, we register another callback
+that will be invoked once the compilation is done using
+<code>RegisterCompilationEndAction</code>.</p>
+<p>One problem with using
+<code>RegisterCompilationEndAction</code> is that it won't be fired unless full solution
+analysis is enabled. So unless you only care about feedback when building
+outside of Visual Studio, you will have to
+<a href="https://docs.microsoft.com/en-us/visualstudio/code-quality/how-to-enable-and-disable-full-solution-analysis-for-managed-code?view=vs-2019">turn that on</a>.</p>
+<pre><code>private void Analyze(CompilationStartAnalysisContext startContext)
+{
+    var handlers = new ConcurrentBag&lt;INamedTypeSymbol&gt;();
+    var requests = new ConcurrentBag&lt;INamedTypeSymbol&gt;();
+
+    // [Omitted]
+
+    startContext.RegisterCompilationEndAction(context =&gt;
+    {
+        // Check all requests.
+        foreach (var request in requests)
+        {
+            var found = false;
+
+            // Now check all handlers.
+            foreach (var handler in handlers)
+            {
+                // Is this handler an implementation for our request?
+                // I.e. RequestHandler&lt;Foo, int&gt; for Foo? Check this by comparing
+                // the first type argument with the name of the request.
+                if (handler.BaseType.TypeArguments[0].Name == request.Name)
+                {
+                    // Yes, we found it.
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                // Report a diagnostic for the first occurance of the symbol.
+                context.ReportDiagnostic(Diagnostic.Create(
+                    MissingRequestHandler,
+                    request.Locations.FirstOrDefault(),
+                    request.Name));
+            }
+        }
+    });
+}
+</code></pre>
+<p>If we run our tests now, it will succeed!</p>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>Not as much code as you suspected, right? Of course, there are a gazillion
+improvements that could be done to this analyzer (both when it comes to
+performance and correctness), but I've tried to keep it as simple as possible
+for this blog post. I'll leave any improvements as an exercise to the reader. ;)</p>
+<p>You can find the source code for the analyzer at
+<a href="https://github.com/patriksvensson/stateful-roslyn-analyzer">https://github.com/patriksvensson/stateful-roslyn-analyzer</a>.</p>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - How to create .NET Core release artifacts with GitHub Actions</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - How to create .NET Core release artifacts with GitHub Actions" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>How to create .NET Core release artifacts with GitHub Actions</h1>
+    <p><em>Published on Sunday, March 22, 2020</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/net" class="button small ">.NET</a></li>
+        <li><a role="button" href="/tags/github" class="button small ">GitHub</a></li>
+        <li><a role="button" href="/tags/github-actions" class="button small ">GitHub Actions</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>In this blog post, we'll create a <a href="https://github.com/features/actions">GitHub Action</a> that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.</p>
+<!--excerpt-->
+<p>There's a myriad of ways of doing this, but this has so far worked out great for me.</p>
+<p><img src="/images/gh_assets.png" alt="A GitHub release with artifacts" /></p>
+<p>For this blog post, I've created a .NET Core 3.1 console application whose only purpose is to write &quot;Hello World&quot; to the console. It's this application we build and package when we create a new GitHub release, and the source code can be found at <a href="https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src">https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src</a></p>
+<h2 id="create-the-github-action">1. Create the GitHub Action</h2>
+<p>We start by creating a new <a href="https://help.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#creating-a-workflow-file">workflow file</a> under <code>.github/workflows</code> in the repository. We call this <code>ci.yaml</code>, but you can name this anything you want as long as it's a YAML file. We then proceed to tell GitHub that we want this workflow to run every time we publish a new release.</p>
+<pre><code class="language-yaml">name: Publish
+on:
+  release:
+    types: [published]
+</code></pre>
+<h2 id="define-the-build-strategy">2. Define the build strategy</h2>
+<p>Now we want to add a job, which we'll call <code>Release</code>, and define a build strategy. We'll use a <a href="https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstrategy">matrix</a> with all the information we need for our different builds, such as what build agent we want to use for each element in the matrix, and what runtime to target.</p>
+<pre><code class="language-yaml">jobs:
+  release:
+    name: Release
+    strategy:
+      matrix:
+        kind: ['linux', 'windows', 'macOS']
+        include:
+          - kind: linux
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+          - kind: macOS
+            os: macos-latest
+            target: osx-x64
+    runs-on: ${{ matrix.os }}
+</code></pre>
+<p>Notice that we reference the <code>os</code> matrix metadata in the <code>runs-on</code> node via <code>{{ matrix.os }}</code>. You can reference any data defined in the matrix this way.</p>
+<p>As you can see in the image below, the name of each step in the matrix will be a combination of the job name and the name of the matrix element.</p>
+<p><img src="/images/gh_job.png" alt="A GitHub Actions job" /></p>
+<h2 id="build-package-and-publish">3. Build, package and publish</h2>
+<p>Now when we've defined the workflow and the build matrix, we'll have to do four things.</p>
+<ol>
+<li>Check out the code</li>
+<li>Setup .NET Core and define what SDK we're going to use</li>
+<li>Build our project and create the release artifacts</li>
+<li>Publish the release artifacts</li>
+</ol>
+<p>Let's start with the first two since there are already pre-made actions for these.</p>
+<pre><code class="language-yaml">    steps:
+      - name: Checkout
+        uses: actions/checkout&#64;v1
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet&#64;v1
+        with:
+          dotnet-version: 3.1.101
+</code></pre>
+<p>Now when everything is in place, we need to build our artifacts and publish them. Since we want to be idiomatic on all platforms, we zip the artifacts on Windows and package them as <code>tar.gz</code> on Linux and macOS.</p>
+<pre><code class="language-yaml">      - name: Build
+        shell: bash
+        run: |
+          # Define some variables for things we need
+          tag=$(git describe --tags --abbrev=0)
+          release_name=&quot;App-$tag-${{ matrix.target }}&quot;
+
+          # Build everything
+          dotnet publish src/App/App.csproj --framework netcoreapp3.1 --runtime &quot;${{ matrix.target }}&quot; -c Release -o &quot;$release_name&quot;
+
+          # Pack files
+          if [ &quot;${{ matrix.target }}&quot; == &quot;win-x64&quot; ]; then
+            7z a -tzip &quot;${release_name}.zip&quot; &quot;./${release_name}/*&quot;
+          else
+            tar czvf &quot;${release_name}.tar.gz&quot; &quot;$release_name&quot;
+          fi
+
+          # Delete output directory
+          rm -r &quot;$release_name&quot;
+</code></pre>
+<p>You might have noticed that we run the build step in a Bash shell and wonder how that works on Windows (at least I did). The answer is that it runs under Git Bash and not under Windows Subsystem for Linux (WSL), as one might have thought.</p>
+<p>Finally, once we've built and packaged everything up, we'll add the artifacts to our release. For this, we'll use <a href="https://github.com/softprops/action-gh-release">softprops/action-gh-release</a> GitHub Action, which I think works very well.</p>
+<pre><code class="language-yaml">      - name: Publish
+        uses: softprops/action-gh-release&#64;v1
+        with:
+          files: &quot;App*&quot;
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+</code></pre>
+<p>That's all there is to it. If you want to create a release, all you have to do is create a new tag, go to the GitHub release page, and create a release from the newly created tag.</p>
+<pre><code class="language-shell">&gt; git tag 1.0
+&gt; git push --tags
+</code></pre>
+<p>You can find the complete YAML file <a href="https://github.com/patriksvensson/dotnet-release-artifacts/blob/master/.github/workflows/ci.yaml">here</a>.</p>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>As I've previously mentioned, there is a myriad of different ways of doing this. What I have described in this blog post is only one of them, but I've found that it has served me well and is reasonably easy to understand even if you're new to GitHub Actions.</p>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

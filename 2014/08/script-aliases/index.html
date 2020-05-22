@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - Script aliases</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - Script aliases" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2014/08/script-aliases" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>Script aliases</h1>
+    <p><em>Published on Tuesday, August 19, 2014</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/net" class="button small ">.NET</a></li>
+        <li><a role="button" href="/tags/csharp" class="button small ">C#</a></li>
+        <li><a role="button" href="/tags/cake" class="button small ">Cake</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>Cake supports something called script aliases. Script aliases are convenience methods that are easily accessible directly from a Cake script. Every <a href="http://cake.readthedocs.org/en/latest/api-documentation.html">API method</a> in Cake is implemented like this.</p>
+<p>In this blog post I will show how to extend Cake with your own script aliases. It's really simple, I promise. ;-)</p>
+<!--excerpt-->
+<h2 id="creating-an-extension">Creating an extension</h2>
+<p>Start by creating a new class library project and add a reference to the <code>Cake.Core</code> NuGet package.</p>
+<pre><code>PM&gt; Install-Package Cake.Core
+</code></pre>
+<p>Add the script alias method that you want to expose to your Cake script. A script alias method is simply an extension method for <code>ICakeContext</code> that's been marked with the <code>CakeMethodAlias</code> attribute.</p>
+<p>You could also add an script alias property, which works the same way as a script alias method, except that it accepts no arguments and is marked with the <code>CakePropertyAlias</code> attribute.</p>
+<pre><code>using Cake.Core;
+using Cake.Core.Annotations;
+
+public static class MyCakeExtension
+{
+   [CakeMethodAlias]
+   public static int GetMagicNumber(this ICakeContext context, bool minValue)
+   {
+      return minValue ? int.MinValue : int.MaxValue;
+   }
+
+   [CakePropertyAlias]
+   public static int TheAnswerToLife(this ICakeContext context)
+   {
+      return 42;
+   }
+}
+</code></pre>
+<h2 id="using-the-extension">Using the extension</h2>
+<p>Compile the assembly and add a reference to it in the build script via the <code>#r</code> directive.</p>
+<pre><code>#r &quot;tools/MyCakeExtension.dll&quot;
+</code></pre>
+<p>Now you should be able to call the method from the script.</p>
+<pre><code>Task(&quot;GetSomeAnswers&quot;)
+   .Does(() =&gt;
+{
+    // Write the values to the console. 
+    Information(&quot;Magic number: {0}&quot;, GetMagicNumber(false));
+    Information(&quot;The answer to life: {0}&quot;, TheAnswerToLife);
+});
+</code></pre>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>This covers the basics of how to create script aliases in Cake.<br />
+If you create a cool extension, tell me about it and I will link to it from the <a href="https://github.com/cake-build/cake">Cake repository</a>.</p>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

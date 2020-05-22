@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - Using build counters in Azure DevOps</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - Using build counters in Azure DevOps" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2019/03/build-counters-in-azure-devops" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>Using build counters in Azure DevOps</h1>
+    <p><em>Published on Wednesday, March 13, 2019</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/azure-devops" class="button small ">Azure DevOps</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>We recently migrated some builds from TeamCity to Azure DevOps at my client, and couldn't
+find a feature analog to TeamCity's <code>%build.counter%</code> which we've been using
+to get automatically incremented version numbers for artifacts.</p>
+<!--excerpt-->
+<p>Since we couldn't find the corresponding feature in Azure DevOps we settled on using the
+<code>$(Build.BuildId)</code> variable which is the canonical ID for a build. Not exactly ideal
+but it solved the immediate issue.</p>
+<p>Today I found a way of accomplishing the same thing in Azure DevOps, but sadly it's not
+properly documented even if it's <a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&amp;tabs=yaml%2Cbatch#set-variables-using-expressions">briefly mentioned</a> in the official documentation.
+The following lines in your <code>azure-devops.yml</code> will set the build number to an
+incrementing number that's scoped to the build definition.</p>
+<pre><code class="language-yml">name: 1.0.$(myBuildCounter)
+variables:
+  myBuildCounter: $[counter('buildCounter',1)]
+</code></pre>
+<p>The example above will create a build definition counter called <code>buildCounter</code> that
+will be initialized to the value <code>1</code>. This value will be incremented for
+each new build. If you ever want to reset or reseed this value you'll have to use the
+<a href="https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions?view=vsts-rest-tfs-4.1">Azure DevOps HTTP API</a>.</p>
+<p>If you have an option, consider using something like <a href="https://gitversion.readthedocs.io/en/latest/">GitVersion</a>
+or <a href="https://github.com/adamralph/minver">MinVer</a> to dynamically calculate a version number from a git repository.</p>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

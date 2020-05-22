@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - Patrik Svensson</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - Patrik Svensson" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                
+<div id="content">
+
+    <div class="row">
+        <div class="8u 12u$(medium)">
+            <div>
+                <a href="/2020/03/creating-release-artifacts-with-github-actions">
+                    <h2>How to create .NET Core release artifacts with GitHub Actions</h2>
+                </a>
+                <p>Posted on Sunday, March 22, 2020</p>
+                <p>In this blog post, we'll create a <a href="https://github.com/features/actions">GitHub Action</a> that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.</p>
+            </div>
+            <div>
+                <a href="/2020/03/how-to-write-a-stateful-roslyn-analyzer">
+                    <h2>How to write a stateful Roslyn analyzer</h2>
+                </a>
+                <p>Posted on Saturday, March 7, 2020</p>
+                <p>I wrote a stateful Roslyn analyzer a couple of days ago to analyze the codebase
+at work for irregularities, and I thought I would share my findings on how I did
+it.</p>
+            </div>
+            <div>
+                <a href="/2020/02/testing-stuff-with-windows-sandbox">
+                    <h2>Testing stuff with Windows Sandbox</h2>
+                </a>
+                <p>Posted on Sunday, February 23, 2020</p>
+                <p>Last week I decided that I wanted to try the new version of Windows Subsystem
+for Linux (conveniently
+named <code>WSL 2</code>). WSL 2 requires that the computer enrolls in Windows slow ring, and
+since the computer I was on didn't receive any insider builds at all, I went
+ahead and enabled the slow ring. The update started, and I went to bed.</p>
+            </div>
+            <div>
+                <a href="/2019/12/roaming-profiles-with-windows-terminal">
+                    <h2>Roaming profiles with Windows Terminal</h2>
+                </a>
+                <p>Posted on Monday, December 2, 2019</p>
+                <p>If you have more than one computer that you use, you might have noticed
+that it requires some work to keep your Windows Terminal profile up to date.</p>
+            </div>
+            <div>
+                <a href="/2019/09/how-to-find-a-nuget-package-path-from-msbuild">
+                    <h2>How to find a NuGet package path from MSBuild</h2>
+                </a>
+                <p>Posted on Monday, September 30, 2019</p>
+                <p>Lately I've been porting some projects at a client from .NET Framework to .NET Core,
+and as part  of that I had to convert <code>csproj</code> files from the old project format
+to <a href="1">the new one</a>. That means getting rid of package references in <code>packages.config</code>
+and replacing them with <code>PackageReference</code> elements in the project files.</p>
+<p>When doing this, I noticed that some files that was part of a NuGet package's
+<a href="2">TFM</a> folder wasn't copied to the application's output folder anymore.
+As annoying as breaking changes are I realized that this change was an improvement
+in many ways, but I still needed to find a way to solve the problem.</p>
+            </div>
+        </div>
+        <div class="4u 12u$(medium)">
+
+            <h5>What is this?</h5>
+            <p>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</p>
+
+            <h5>Tags</h5>
+            <ul class="actions small">
+                <li><a role="button" href="/tags/net" class="button small ">.NET (15)</a></li>
+                <li><a role="button" href="/tags/csharp" class="button small ">C# (12)</a></li>
+                <li><a role="button" href="/tags/cake" class="button small ">Cake (3)</a></li>
+                <li><a role="button" href="/tags/debugging" class="button small ">Debugging (2)</a></li>
+                <li><a role="button" href="/tags/github" class="button small ">GitHub (2)</a></li>
+                <li><a role="button" href="/tags/windows-10" class="button small ">Windows 10 (2)</a></li>
+                <li><a role="button" href="/tags/wpf" class="button small ">WPF (2)</a></li>
+                <li><a role="button" href="/tags/appveyor" class="button small ">AppVeyor (1)</a></li>
+                <li><a role="button" href="/tags/autorest" class="button small ">AutoRest (1)</a></li>
+                <li><a role="button" href="/tags/azure" class="button small ">Azure (1)</a></li>
+            </ul>
+            <ul class="actions small">
+                <li><a href="/tags" class="button small">View All Tags &rarr;</a></li>
+            </ul>
+
+            <h5>Older Posts</h5>
+            <ul>
+                <li><a href="/2019/06/debugging-an-uwp-store-app-with-windbg">Debugging an UWP store app with WinDbg</a></li>
+                <li><a href="/2019/03/build-counters-in-azure-devops">Using build counters in Azure DevOps</a></li>
+                <li><a href="/2018/10/generating-api-clients-using-autorest">Generating API clients using AutoRest</a></li>
+                <li><a href="/2018/04/an-introduction-to-spectre-cli">An introduction to Spectre.Cli</a></li>
+                <li><a href="/2018/02/debugging-rust-on-windows-using-vscode">Debugging Rust on Windows using Visual Studio Code</a></li>
+                <li><a href="/2018/01/calculating-msi-product-version">Calculating product versions for MSI packages compatible with semantic versioning</a></li>
+                <li><a href="/2017/12/binding-to-a-richtextbox-in-wpf">Binding to a RichTextBox in WPF</a></li>
+                <li><a href="/2017/12/conditionals-in-xaml">Conditionals in XAML</a></li>
+                <li><a href="/2017/11/using-embedded-resources-in-xunit-tests">Using embedded resources in xUnit tests</a></li>
+                <li><a href="/2017/08/never-mutate-state-in-a-debug-assert-call">Never mutate state in a Debug.Assert call</a></li>
+                <li><a href="/2016/12/azure-web-apps-and-the-certificate-store">Azure Web Apps and the certificate store</a></li>
+                <li><a href="/2014/11/cake-and-appveyor-integration">Cake and AppVeyor integration</a></li>
+                <li><a href="/2014/08/script-aliases">Script aliases</a></li>
+                <li><a href="/2014/07/its-not-a-party-without-cake">It's not a party without Cake</a></li>
+                <li><a href="/2014/06/the-singleton-logger">The singleton logger</a></li>
+                <li><a href="/2014/04/introducing-lunt">Introducing Lunt</a></li>
+                <li><a href="/2014/01/displaying-teamcity-build-status-on-github">Displaying TeamCity build status on GitHub</a></li>
+                <li><a href="/2013/12/binarywriter-and-cplusplus">System.IO.BinaryWriter and C++</a></li>
+                <li><a href="/2013/08/culture-agnostic-string-comparisons">Culture agnostic string comparisons</a></li>
+                <li><a href="/2013/08/how-to-dynamically-add-attributes-to-a-class-with-castle-core">How to dynamically add attributes to a class with Castle.Core</a></li>
+            </ul>
+            <ul class="actions small">
+                <li><a href="/posts" class="button small">Archive &rarr;</a></li>
+            </ul>
+
+            <hr />
+            <h5>Contact</h5>
+            <ul class="list-unstyled">
+                <li><a href="https://twitter.com/firstdrafthell"><i class="fa fa-twitter"></i> Twitter</a></li>
+                <li><a href="https://github.com/patriksvensson"><i class="fa fa-github"></i> GitHub</a></li>
+                <li><a href="https://keybase.io/patrik"><i class="fa fa-key"></i> Keybase</a></li>
+                <li><a href="https://stackoverflow.com/users/936/patrik"><i class="fa fa-stack-overflow"></i> Stack Overflow</a></li>
+                <li><a href="https://www.linkedin.com/in/psvensson82"><i class="fa fa-linkedin"></i> LinkedIn</a></li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,1576 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+	<id>https://patriksvensson.se/</id>
+	<title>Patrik Svensson</title>
+	<author>
+		<name>Patrik Svensson</name>
+	</author>
+	<link rel="self" href="https://patriksvensson.se/" />
+	<rights>2020</rights>
+	<updated>2020-05-22T10:25:16Z</updated>
+	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
+	<entry>
+		<id>https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions</id>
+		<title>How to create .NET Core release artifacts with GitHub Actions</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions" />
+		<updated>2020-03-22T00:00:00Z</updated>
+		<content>&lt;p&gt;In this blog post, we'll create a &lt;a href="https://github.com/features/actions"&gt;GitHub Action&lt;/a&gt; that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;There's a myriad of ways of doing this, but this has so far worked out great for me.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/gh_assets.png" alt="A GitHub release with artifacts" /&gt;&lt;/p&gt;
+&lt;p&gt;For this blog post, I've created a .NET Core 3.1 console application whose only purpose is to write &amp;quot;Hello World&amp;quot; to the console. It's this application we build and package when we create a new GitHub release, and the source code can be found at &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src"&gt;https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id="create-the-github-action"&gt;1. Create the GitHub Action&lt;/h2&gt;
+&lt;p&gt;We start by creating a new &lt;a href="https://help.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#creating-a-workflow-file"&gt;workflow file&lt;/a&gt; under &lt;code&gt;.github/workflows&lt;/code&gt; in the repository. We call this &lt;code&gt;ci.yaml&lt;/code&gt;, but you can name this anything you want as long as it's a YAML file. We then proceed to tell GitHub that we want this workflow to run every time we publish a new release.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;name: Publish
+on:
+  release:
+    types: [published]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="define-the-build-strategy"&gt;2. Define the build strategy&lt;/h2&gt;
+&lt;p&gt;Now we want to add a job, which we'll call &lt;code&gt;Release&lt;/code&gt;, and define a build strategy. We'll use a &lt;a href="https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstrategy"&gt;matrix&lt;/a&gt; with all the information we need for our different builds, such as what build agent we want to use for each element in the matrix, and what runtime to target.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;jobs:
+  release:
+    name: Release
+    strategy:
+      matrix:
+        kind: ['linux', 'windows', 'macOS']
+        include:
+          - kind: linux
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+          - kind: macOS
+            os: macos-latest
+            target: osx-x64
+    runs-on: ${{ matrix.os }}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Notice that we reference the &lt;code&gt;os&lt;/code&gt; matrix metadata in the &lt;code&gt;runs-on&lt;/code&gt; node via &lt;code&gt;{{ matrix.os }}&lt;/code&gt;. You can reference any data defined in the matrix this way.&lt;/p&gt;
+&lt;p&gt;As you can see in the image below, the name of each step in the matrix will be a combination of the job name and the name of the matrix element.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/gh_job.png" alt="A GitHub Actions job" /&gt;&lt;/p&gt;
+&lt;h2 id="build-package-and-publish"&gt;3. Build, package and publish&lt;/h2&gt;
+&lt;p&gt;Now when we've defined the workflow and the build matrix, we'll have to do four things.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Check out the code&lt;/li&gt;
+&lt;li&gt;Setup .NET Core and define what SDK we're going to use&lt;/li&gt;
+&lt;li&gt;Build our project and create the release artifacts&lt;/li&gt;
+&lt;li&gt;Publish the release artifacts&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Let's start with the first two since there are already pre-made actions for these.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;    steps:
+      - name: Checkout
+        uses: actions/checkout&amp;#64;v1
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet&amp;#64;v1
+        with:
+          dotnet-version: 3.1.101
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now when everything is in place, we need to build our artifacts and publish them. Since we want to be idiomatic on all platforms, we zip the artifacts on Windows and package them as &lt;code&gt;tar.gz&lt;/code&gt; on Linux and macOS.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;      - name: Build
+        shell: bash
+        run: |
+          # Define some variables for things we need
+          tag=$(git describe --tags --abbrev=0)
+          release_name=&amp;quot;App-$tag-${{ matrix.target }}&amp;quot;
+
+          # Build everything
+          dotnet publish src/App/App.csproj --framework netcoreapp3.1 --runtime &amp;quot;${{ matrix.target }}&amp;quot; -c Release -o &amp;quot;$release_name&amp;quot;
+
+          # Pack files
+          if [ &amp;quot;${{ matrix.target }}&amp;quot; == &amp;quot;win-x64&amp;quot; ]; then
+            7z a -tzip &amp;quot;${release_name}.zip&amp;quot; &amp;quot;./${release_name}/*&amp;quot;
+          else
+            tar czvf &amp;quot;${release_name}.tar.gz&amp;quot; &amp;quot;$release_name&amp;quot;
+          fi
+
+          # Delete output directory
+          rm -r &amp;quot;$release_name&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You might have noticed that we run the build step in a Bash shell and wonder how that works on Windows (at least I did). The answer is that it runs under Git Bash and not under Windows Subsystem for Linux (WSL), as one might have thought.&lt;/p&gt;
+&lt;p&gt;Finally, once we've built and packaged everything up, we'll add the artifacts to our release. For this, we'll use &lt;a href="https://github.com/softprops/action-gh-release"&gt;softprops/action-gh-release&lt;/a&gt; GitHub Action, which I think works very well.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;      - name: Publish
+        uses: softprops/action-gh-release&amp;#64;v1
+        with:
+          files: &amp;quot;App*&amp;quot;
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;That's all there is to it. If you want to create a release, all you have to do is create a new tag, go to the GitHub release page, and create a release from the newly created tag.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-shell"&gt;&amp;gt; git tag 1.0
+&amp;gt; git push --tags
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You can find the complete YAML file &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/blob/master/.github/workflows/ci.yaml"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;As I've previously mentioned, there is a myriad of different ways of doing this. What I have described in this blog post is only one of them, but I've found that it has served me well and is reasonably easy to understand even if you're new to GitHub Actions.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;In this blog post, we'll create a &lt;a href="https://github.com/features/actions"&gt;GitHub Action&lt;/a&gt; that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2020/03/how-to-write-a-stateful-roslyn-analyzer</id>
+		<title>How to write a stateful Roslyn analyzer</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2020/03/how-to-write-a-stateful-roslyn-analyzer" />
+		<updated>2020-03-07T00:00:00Z</updated>
+		<content>&lt;p&gt;I wrote a stateful Roslyn analyzer a couple of days ago to analyze the codebase
+at work for irregularities, and I thought I would share my findings on how I did
+it.&lt;/p&gt;
+&lt;h2 id="the-goal"&gt;The goal&lt;/h2&gt;
+&lt;p&gt;Our goal for this blog post is to write an analyzer that finds all non-abstract
+classes that implement &lt;code&gt;IRequest&amp;lt;TResult&amp;gt;&lt;/code&gt;, and check whether or not they have
+an associated request handler &lt;code&gt;RequestHandler&amp;lt;TRequest, TResult&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The algorithm for our analyzer is kind of straight forward.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Find all non-abstract classes that implement &lt;code&gt;IRequest&amp;lt;TResult&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Find all non-abstract classes that inherit from &lt;code&gt;RequestHandler&amp;lt;TRequest, TResult&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Once the compilation finished, find all requests that don't have a handler
+and report a diagnostic for each of them.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;We won't cover the actual setup of the analyzer project, but head over to
+&lt;a href="https://devblogs.microsoft.com/dotnet/how-to-write-a-roslyn-analyzer"&gt;https://devblogs.microsoft.com/dotnet/how-to-write-a-roslyn-analyzer&lt;/a&gt; and follow
+Mika's excellent tutorial on this and comes back after that. I'll wait.&lt;/p&gt;
+&lt;h2 id="setting-everything-up"&gt;Setting everything up&lt;/h2&gt;
+&lt;p&gt;Ok, now, when you've got a project set up, let's create the boilerplate for the
+request analyzer. Start by removing any existing analyzers and code fixes from the
+project and create a new analyzer.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
+
+namespace RequestAnalyzer
+{
+    [DiagnosticAnalyzer(LanguageNames.CSharp)]
+    public class RequestAnalyzer : DiagnosticAnalyzer
+    {
+        public const string DiagnosticId = &amp;quot;RequestAnalyzer&amp;quot;;
+        private static DiagnosticDescriptor Rule = new DiagnosticDescriptor(
+            DiagnosticId, &amp;quot;Request does not have an associated handler&amp;quot;,
+            &amp;quot;The request '{0}' does not have an associated handler.&amp;quot;, &amp;quot;Maintenance&amp;quot;,
+            DiagnosticSeverity.Warning, isEnabledByDefault: true,
+            description: &amp;quot;Requests should have an associated handler&amp;quot;);
+
+        public override ImmutableArray&amp;lt;DiagnosticDescriptor&amp;gt; SupportedDiagnostics
+        {
+            get { return ImmutableArray.Create(Rule); }
+        }
+
+        public override void Initialize(AnalysisContext analysisContext)
+        {
+            analysisContext.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze);
+            analysisContext.EnableConcurrentExecution();
+            analysisContext.RegisterCompilationStartAction(Analyze);
+        }
+
+        private void Analyze(CompilationStartAnalysisContext startContext)
+        {
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Once we have all the boilerplate in place, we'll create a test that will verify that
+our analyzer works as expected.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;[TestClass]
+public class UnitTest : CodeFixVerifier
+{
+    protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
+    {
+        return new RequestAnalyzer();
+    }
+
+    [TestMethod]
+    public void Should_Return_Diagnostic_For_Missing_Command_Handler()
+    {
+        var test = &amp;#64;&amp;quot;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics;
+
+namespace Foo
+{
+    public interface IRequest&amp;lt;TResult&amp;gt;
+    {
+    }
+
+    public sealed class MyRequest : IRequest&amp;lt;int&amp;gt;
+    {
+    }
+
+    public abstract class AbstractRequest : IRequest&amp;lt;int&amp;gt;
+    {
+    }
+
+    public sealed class MyOtherRequest : IRequest&amp;lt;int&amp;gt;
+    {
+    }
+
+    public sealed class MyRequestHandler : RequestHandler&amp;lt;MyRequest, int&amp;gt;
+    {
+    }
+}&amp;quot;;
+        var expected = new DiagnosticResult
+        {
+            Id = &amp;quot;RequestAnalyzer&amp;quot;,
+            Message = &amp;quot;The request 'MyOtherRequest' does not have an associated handler.&amp;quot;,
+            Severity = DiagnosticSeverity.Warning,
+            Locations =
+                new[] {
+                        new DiagnosticResultLocation(&amp;quot;Test0.cs&amp;quot;, 23, 29)
+                    }
+        };
+
+        VerifyCSharpDiagnostic(test, expected);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The test will set up the source code that will be analyzed and some expectations.
+Notice that we need to specify the &lt;code&gt;IRequest&amp;lt;TResult&amp;gt;&lt;/code&gt; definition in our code.
+When Roslyn encounters an unknown type during a diagnostic run, it will assume
+it's a type, so by specifying this, Roslyn will know that it's an interface.&lt;/p&gt;
+&lt;h2 id="writing-the-actual-analyzer"&gt;Writing the actual analyzer&lt;/h2&gt;
+&lt;p&gt;So, the first step is finding the requests and the request handlers and store
+them somewhere. For this, we'll register a callback that will be called every
+time the semantic analysis of a class, enum, or interface has been completed. In
+the callback, we will check if the type fits the criteria and store it in a
+&lt;code&gt;ConcurrentBag&lt;/code&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;private void Analyze(CompilationStartAnalysisContext startContext)
+{
+    var handlers = new ConcurrentBag&amp;lt;INamedTypeSymbol&amp;gt;();
+    var requests = new ConcurrentBag&amp;lt;INamedTypeSymbol&amp;gt;();
+
+    startContext.RegisterSymbolAction(context =&amp;gt;
+    {
+        var type = (INamedTypeSymbol)context.Symbol;
+        if (type.TypeKind == TypeKind.Class)
+        {
+            if (type.IsAbstract || type.IsStatic)
+            {
+                return;
+            }
+
+            // Is this a request handler?
+            if (type.BaseType != null &amp;amp;&amp;amp; type.BaseType.Name == &amp;quot;RequestHandler&amp;quot; &amp;amp;&amp;amp;
+                type.BaseType.TypeArguments.Length == 2)
+            {
+                handlers.Add(type);
+            }
+            // Is this a request?
+            else if (type.Interfaces.Any(x =&amp;gt; x.Name == &amp;quot;IRequest&amp;quot; &amp;amp;&amp;amp; x.TypeArguments.Length == 1))
+            {
+                requests.Add(type);
+            }
+        }
+    }, SymbolKind.NamedType);
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now when we have all the information we need, we need to perform our actual
+analysis of the data we've collected. For this, we register another callback
+that will be invoked once the compilation is done using
+&lt;code&gt;RegisterCompilationEndAction&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;One problem with using
+&lt;code&gt;RegisterCompilationEndAction&lt;/code&gt; is that it won't be fired unless full solution
+analysis is enabled. So unless you only care about feedback when building
+outside of Visual Studio, you will have to
+&lt;a href="https://docs.microsoft.com/en-us/visualstudio/code-quality/how-to-enable-and-disable-full-solution-analysis-for-managed-code?view=vs-2019"&gt;turn that on&lt;/a&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;private void Analyze(CompilationStartAnalysisContext startContext)
+{
+    var handlers = new ConcurrentBag&amp;lt;INamedTypeSymbol&amp;gt;();
+    var requests = new ConcurrentBag&amp;lt;INamedTypeSymbol&amp;gt;();
+
+    // [Omitted]
+
+    startContext.RegisterCompilationEndAction(context =&amp;gt;
+    {
+        // Check all requests.
+        foreach (var request in requests)
+        {
+            var found = false;
+
+            // Now check all handlers.
+            foreach (var handler in handlers)
+            {
+                // Is this handler an implementation for our request?
+                // I.e. RequestHandler&amp;lt;Foo, int&amp;gt; for Foo? Check this by comparing
+                // the first type argument with the name of the request.
+                if (handler.BaseType.TypeArguments[0].Name == request.Name)
+                {
+                    // Yes, we found it.
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                // Report a diagnostic for the first occurance of the symbol.
+                context.ReportDiagnostic(Diagnostic.Create(
+                    MissingRequestHandler,
+                    request.Locations.FirstOrDefault(),
+                    request.Name));
+            }
+        }
+    });
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If we run our tests now, it will succeed!&lt;/p&gt;
+&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;Not as much code as you suspected, right? Of course, there are a gazillion
+improvements that could be done to this analyzer (both when it comes to
+performance and correctness), but I've tried to keep it as simple as possible
+for this blog post. I'll leave any improvements as an exercise to the reader. ;)&lt;/p&gt;
+&lt;p&gt;You can find the source code for the analyzer at
+&lt;a href="https://github.com/patriksvensson/stateful-roslyn-analyzer"&gt;https://github.com/patriksvensson/stateful-roslyn-analyzer&lt;/a&gt;.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;I wrote a stateful Roslyn analyzer a couple of days ago to analyze the codebase
+at work for irregularities, and I thought I would share my findings on how I did
+it.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2020/02/testing-stuff-with-windows-sandbox</id>
+		<title>Testing stuff with Windows Sandbox</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2020/02/testing-stuff-with-windows-sandbox" />
+		<updated>2020-02-23T00:00:00Z</updated>
+		<content>&lt;p&gt;Last week I decided that I wanted to try the new version of Windows Subsystem
+for Linux (conveniently
+named &lt;code&gt;WSL 2&lt;/code&gt;). WSL 2 requires that the computer enrolls in Windows slow ring, and
+since the computer I was on didn't receive any insider builds at all, I went
+ahead and enabled the slow ring. The update started, and I went to bed.&lt;/p&gt;
+&lt;p&gt;When I woke up the next morning, I saw this:&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/fubar.jpg" alt="computer can't find MBR" /&gt;&lt;/p&gt;
+&lt;p&gt;I tried restoring the master boot record using a recovery disk, but I couldn't
+get this to work for some unknown reason.&lt;/p&gt;
+&lt;p&gt;Luckily (😅), my computer crashed for almost the same reason a couple of months
+ago, so I had started to prepare some scripts to help me set up a new computer
+using &lt;a href="https://chocolatey.org/"&gt;Chocolatey&lt;/a&gt; and
+&lt;a href="https://boxstarter.org/"&gt;Boxstarter&lt;/a&gt;. The scripts were far from perfect but
+worked well enough to get my computer up and running in less than 30 minutes.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/boxstarter.jpg" alt="Boxstarter" /&gt;&lt;/p&gt;
+&lt;p&gt;After the installation, I started making some adjustments to the script and
+wanted to try it all out. Since I want the setup part to be as smooth as
+possible, I was contemplating whether to do another reinstall of Windows and
+rerun it. Then I remembered that Microsoft recently released a new technology
+based on &lt;a href="https://docs.microsoft.com/en-us/virtualization/windowscontainers/about/"&gt;Windows Containers&lt;/a&gt;
+called &lt;code&gt;Windows Sandbox&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://techcommunity.microsoft.com/t5/windows-kernel-internals/windows-sandbox/ba-p/301849"&gt;Windows Sandbox&lt;/a&gt;
+is an entirely isolated environment running under your existing Windows
+installation. Every time you close the sandbox, the content of it gets removed.
+The sweet part of this is that it starts in mere seconds, so it's perfect for
+testing things that, in some way, alter a computer's state or perform some
+destructive operation.&lt;/p&gt;
+&lt;h2 id="installing-windows-sandbox"&gt;Installing Windows Sandbox&lt;/h2&gt;
+&lt;p&gt;Installing Windows Sandbox is as simple as running the following command from a
+PowerShell console:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS&amp;gt; Enable-WindowsOptionalFeature -FeatureName &amp;quot;Containers-DisposableClientVM&amp;quot; -All -Online
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Restart your computer for the change to take effect. Once the
+computer rebooted, search for &lt;code&gt;Sandbox&lt;/code&gt; in the start menu to start it. The
+startup time is slightly longer the first time you start it, but after the
+initial run, it should start within a second or so.&lt;/p&gt;
+&lt;h2 id="configuring-the-windows-sandbox"&gt;Configuring the Windows Sandbox&lt;/h2&gt;
+&lt;p&gt;When I started tweaking my install scripts, the routine looked something like
+this:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Start Windows Sandbox&lt;/li&gt;
+&lt;li&gt;Copy files from the host machine to the sandbox&lt;/li&gt;
+&lt;li&gt;Open a PowerShell prompt&lt;/li&gt;
+&lt;li&gt;Enable execution of PowerShell script via &lt;code&gt;Set-ExecutionPolicy&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Go to the script directory&lt;/li&gt;
+&lt;li&gt;Run the installation script&lt;/li&gt;
+&lt;li&gt;Wait for the script to finish running&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This little routine quickly became tedious, but after some detective work on the
+Internet, I discovered that this was automatable by creating a configuration file
+to initialize the sandbox. The configuration file has the extension &lt;code&gt;.wsb&lt;/code&gt; and
+works almost like an old fashion &lt;code&gt;.rdp&lt;/code&gt; file, with the only difference that
+&lt;em&gt;wsb&lt;/em&gt; file is an XML file instead of an INI file. You create one and double
+click it, and a new Sandbox environment gets created for you.&lt;/p&gt;
+&lt;p&gt;In my case this file looks like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;Configuration&amp;gt;
+&amp;lt;VGpu&amp;gt;Disable&amp;lt;/VGpu&amp;gt;
+&amp;lt;Networking&amp;gt;Disable&amp;lt;/Networking&amp;gt;
+&amp;lt;MappedFolders&amp;gt;
+   &amp;lt;MappedFolder&amp;gt;
+     &amp;lt;HostFolder&amp;gt;D:\Source\github\patriksvensson\machine\windows&amp;lt;/HostFolder&amp;gt;
+     &amp;lt;ReadOnly&amp;gt;true&amp;lt;/ReadOnly&amp;gt;
+   &amp;lt;/MappedFolder&amp;gt;
+&amp;lt;/MappedFolders&amp;gt;
+&amp;lt;LogonCommand&amp;gt;
+   &amp;lt;Command&amp;gt;C:\users\WDAGUtilityAccount\Desktop\machine\run.cmd&amp;lt;/Command&amp;gt;
+&amp;lt;/LogonCommand&amp;gt;
+&amp;lt;/Configuration&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So by simply double-clicking on the configuration file, A new sandboxed
+environment gets created, and my installation script starts.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/windows-sandbox.png" alt="Windows Sandbox" /&gt;&lt;/p&gt;
+&lt;h2 id="detect-if-youre-running-in-the-sandbox"&gt;Detect if you're running in the sandbox&lt;/h2&gt;
+&lt;p&gt;There are some things you don't want to do in a sandboxed environment. Perhaps
+it's not permitted, such as installing the Windows Sandbox, or you don't
+want to run some part of your script.&lt;/p&gt;
+&lt;p&gt;Detecting whether or not you're in a sandboxed environment is reasonably
+straightforward; check if the current username is &lt;code&gt;WDAGUtilityAccount&lt;/code&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;if($env:UserName -ne &amp;quot;WDAGUtilityAccount&amp;quot;) {
+    # Do things that can't be done in Windows Sandbox.
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;So hopefully, this blog post might be of help to you if you need a
+sandboxed environment. If you're interested in taking a look at my installation
+scripts, you can find them at
+&lt;a href="https://github.com/patriksvensson/machine"&gt;https://github.com/patriksvensson/machine&lt;/a&gt;.
+These scripts are highly personal, so you probably want to change them.
+For the same reason, I'm not accepting any pull requests, but if you have any
+suggestions, feel free to reach out to me on Twitter.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;Last week I decided that I wanted to try the new version of Windows Subsystem
+for Linux (conveniently
+named &lt;code&gt;WSL 2&lt;/code&gt;). WSL 2 requires that the computer enrolls in Windows slow ring, and
+since the computer I was on didn't receive any insider builds at all, I went
+ahead and enabled the slow ring. The update started, and I went to bed.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2019/12/roaming-profiles-with-windows-terminal</id>
+		<title>Roaming profiles with Windows Terminal</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2019/12/roaming-profiles-with-windows-terminal" />
+		<updated>2019-12-02T00:00:00Z</updated>
+		<content>&lt;p&gt;If you have more than one computer that you use, you might have noticed
+that it requires some work to keep your Windows Terminal profile up to date.&lt;/p&gt;
+&lt;p&gt;I've always been a fan of keeping configuration files and similar in
+version control but sadly Windows Terminal doesn't support merging
+external configurations with the main one. I've
+&lt;a href="https://github.com/microsoft/terminal/issues/2933"&gt;opened an issue&lt;/a&gt;
+in Windows Terminals GitHub repository suggesting this, but until that has
+been implemented you can work around this by creating a symlink to
+the configuration file in a Git repository or similar.&lt;/p&gt;
+&lt;p&gt;Below you see a small PowerShell script which will do this for you.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;###############
+# Install.ps1 #
+###############
+
+# Make sure Windows Terminal have been installed.
+$TerminalPath = Join-Path $Env:LOCALAPPDATA &amp;quot;Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe&amp;quot;;
+if(!(Test-Path $TerminalPath)) {
+    Throw &amp;quot;Windows Terminal have not been installed.&amp;quot;
+}
+
+# Create symlink to Windows Terminal settings.
+$TerminalProfileSource = Join-Path $PWD &amp;quot;profiles.json&amp;quot;
+$TerminalProfileDestination = Join-Path $TerminalPath &amp;quot;LocalState/profiles.json&amp;quot;;
+if(Test-Path $TerminalProfileDestination) {
+    Remove-Item -Path $TerminalProfileDestination;
+}
+Write-Host &amp;quot;Creating symlink to Windows terminal settings...&amp;quot;
+New-Item -Path $TerminalProfileDestination -ItemType SymbolicLink -Value $TerminalProfileSource | Out-Null;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Place this PowerShell file in the same directory as your &lt;code&gt;profiles.json&lt;/code&gt; and
+run it as administrator and you now have a roaming Windows Terminal profile.
+However, there's a downside with this approach. Any changes to the file
+won't be picked up by Windows Terminal automatically, so you will need to
+restart the terminal for it to  reload the configuration.&lt;/p&gt;
+&lt;p&gt;I've created a repository for my own configurations which include configuration files
+for PowerShell as well as &lt;a href="https://starship.rs/"&gt;Starship&lt;/a&gt;, which you can find at
+&lt;a href="https://github.com/patriksvensson/machine"&gt;https://github.com/patriksvensson/machine&lt;/a&gt;.
+Feel free to fork or copy it if you want a starting point for your own configuration files.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;If you have more than one computer that you use, you might have noticed
+that it requires some work to keep your Windows Terminal profile up to date.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2019/09/how-to-find-a-nuget-package-path-from-msbuild</id>
+		<title>How to find a NuGet package path from MSBuild</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2019/09/how-to-find-a-nuget-package-path-from-msbuild" />
+		<updated>2019-09-30T00:00:00Z</updated>
+		<content>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
+and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
+to &lt;a href="1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
+and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
+&lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
+&lt;a href="2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
+As annoying as breaking changes are I realized that this change was an improvement
+in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;There was a &lt;a href="3"&gt;feature added&lt;/a&gt; in the NuGet client library that was shipped with
+Visual Studio 15.9.9 that introduced a new attribute to the &lt;code&gt;PackageReference&lt;/code&gt;
+element called &lt;code&gt;GeneratePathProperty&lt;/code&gt;. What this attribute does is that it creates
+a new MSBuild property that is set to the package's root path on disk.&lt;/p&gt;
+&lt;p&gt;Knowing where the NuGet package would be unpacked on disk allowed me to write a
+MSBuild target, that after building my project would copy the file to the output
+directory.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;!-- Specify what packages we're dependent on --&amp;gt;
+&amp;lt;ItemGroup&amp;gt;
+    &amp;lt;PackageReference Include=&amp;quot;Foo.Bar&amp;quot; 
+                      Version=&amp;quot;1.2.3&amp;quot; 
+                      GeneratePathProperty=&amp;quot;true&amp;quot; /&amp;gt;
+&amp;lt;/ItemGroup&amp;gt;
+
+&amp;lt;!-- Copy the files to the output directory --&amp;gt;
+&amp;lt;Target Name=&amp;quot;CopyFooBarFiles&amp;quot; AfterTargets=&amp;quot;Build&amp;quot;&amp;gt;
+    &amp;lt;Copy Condition=&amp;quot;'$(TargetFramework)' == 'net462'&amp;quot; 
+          SourceFiles=&amp;quot;$(PkgFoo_Bar)\lib\net40\qux.dat&amp;quot; 
+          DestinationFolder=&amp;quot;$(OutDir)&amp;quot; /&amp;gt;
+&amp;lt;/Target&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So by setting &lt;code&gt;GeneratePathProperty=&amp;quot;true&amp;quot;&lt;/code&gt; for the &lt;code&gt;Foo.Bar&lt;/code&gt; reference above, an
+MSBuild property named &lt;code&gt;PkgFoo_Bar&lt;/code&gt; automatically gets created set to the path to
+the package on disk.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
+and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
+to &lt;a href="1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
+and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
+&lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
+&lt;a href="2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
+As annoying as breaking changes are I realized that this change was an improvement
+in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2019/06/debugging-an-uwp-store-app-with-windbg</id>
+		<title>Debugging an UWP store app with WinDbg</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2019/06/debugging-an-uwp-store-app-with-windbg" />
+		<updated>2019-06-27T00:00:00Z</updated>
+		<content>&lt;p&gt;I was encountering a rather irritating bug a couple of days ago that only manifested itself
+when built via the native toolchain in release mode. I couldn't get it to manifest itself
+when running from Visual Studio for some reason and the problem occurred so early in the app's
+lifecycle that I didn't have time to create a minidump of the process.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;Luckily, after some reading I learned that you could connect &lt;a href="https://en.wikipedia.org/wiki/WinDbg"&gt;WinDbg&lt;/a&gt; directly to a
+UWP app via the &lt;code&gt;plmPackage&lt;/code&gt; and &lt;code&gt;plmApp&lt;/code&gt; parameters but this was kind of cumbersome -
+especially when debugging different versions and architecture of the package - so I decided
+to write a little PowerShell script to automate starting of the debugging session.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;# Replace this value with the application ID that you 
+# find in the applications Package.appxmanifest file. 
+$AppName = &amp;quot;App&amp;quot;
+
+# Get the package.
+$Package = Get-AppxPackage -Name &amp;quot;MyPublisher.MyCoolPackage&amp;quot;;
+if($null -eq $Package) {
+    throw &amp;quot;Could not find package!&amp;quot;;
+}
+
+# Launch WinDbg
+$WinDebugPath = &amp;quot;C:\Program Files (x86)\Windows Kits\10\Debuggers\$($Package.Architecture)\windbg.exe&amp;quot;;
+&amp;amp;$WinDebugPath -plmPackage $Package.PackageFullName -plmApp $AppName
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Please note that you need to have &lt;a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk"&gt;Windows Driver Kit&lt;/a&gt; installed for this to work.&lt;/p&gt;
+&lt;p&gt;Happy debugging!&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;I was encountering a rather irritating bug a couple of days ago that only manifested itself
+when built via the native toolchain in release mode. I couldn't get it to manifest itself
+when running from Visual Studio for some reason and the problem occurred so early in the app's
+lifecycle that I didn't have time to create a minidump of the process.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2019/03/build-counters-in-azure-devops</id>
+		<title>Using build counters in Azure DevOps</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2019/03/build-counters-in-azure-devops" />
+		<updated>2019-03-13T00:00:00Z</updated>
+		<content>&lt;p&gt;We recently migrated some builds from TeamCity to Azure DevOps at my client, and couldn't
+find a feature analog to TeamCity's &lt;code&gt;%build.counter%&lt;/code&gt; which we've been using
+to get automatically incremented version numbers for artifacts.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;Since we couldn't find the corresponding feature in Azure DevOps we settled on using the
+&lt;code&gt;$(Build.BuildId)&lt;/code&gt; variable which is the canonical ID for a build. Not exactly ideal
+but it solved the immediate issue.&lt;/p&gt;
+&lt;p&gt;Today I found a way of accomplishing the same thing in Azure DevOps, but sadly it's not
+properly documented even if it's &lt;a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&amp;amp;tabs=yaml%2Cbatch#set-variables-using-expressions"&gt;briefly mentioned&lt;/a&gt; in the official documentation.
+The following lines in your &lt;code&gt;azure-devops.yml&lt;/code&gt; will set the build number to an
+incrementing number that's scoped to the build definition.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yml"&gt;name: 1.0.$(myBuildCounter)
+variables:
+  myBuildCounter: $[counter('buildCounter',1)]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The example above will create a build definition counter called &lt;code&gt;buildCounter&lt;/code&gt; that
+will be initialized to the value &lt;code&gt;1&lt;/code&gt;. This value will be incremented for
+each new build. If you ever want to reset or reseed this value you'll have to use the
+&lt;a href="https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions?view=vsts-rest-tfs-4.1"&gt;Azure DevOps HTTP API&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;If you have an option, consider using something like &lt;a href="https://gitversion.readthedocs.io/en/latest/"&gt;GitVersion&lt;/a&gt;
+or &lt;a href="https://github.com/adamralph/minver"&gt;MinVer&lt;/a&gt; to dynamically calculate a version number from a git repository.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;We recently migrated some builds from TeamCity to Azure DevOps at my client, and couldn't
+find a feature analog to TeamCity's &lt;code&gt;%build.counter%&lt;/code&gt; which we've been using
+to get automatically incremented version numbers for artifacts.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2018/10/generating-api-clients-using-autorest</id>
+		<title>Generating API clients using AutoRest</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2018/10/generating-api-clients-using-autorest" />
+		<updated>2018-10-02T00:00:00Z</updated>
+		<content>&lt;p&gt;This blog post looks at automatically generating an HTTP API client
+from a &lt;a href="https://swagger.io/specification/"&gt;OpenAPI specification&lt;/a&gt;
+(formerly swagger) using &lt;a href="http://azure.github.io/autorest/"&gt;AutoRest&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;We will also use another tool called &lt;a href="https://github.com/domaindrivendev/Swashbuckle.AspNetCore"&gt;Swashbuckle&lt;/a&gt;
+which is an ASP.NET Core library that allows us to annotate our
+controllers with metadata that is used to generate OpenAPI specifications.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;h2 id="installing-autorest"&gt;Installing AutoRest&lt;/h2&gt;
+&lt;p&gt;The first thing we need to do is to install &lt;code&gt;AutoRest&lt;/code&gt; globally on
+our machine. If you have NPM installed on your computer, then this
+can  be done by running the following command:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; npm install -g autorest
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="setting-up-the-code-base"&gt;Setting up the code base&lt;/h2&gt;
+&lt;p&gt;For this project we're going to create a standard ASP.NET Core
+web project, a class library that will hold our API client and
+a PowerShell script to generate the client for us.&lt;/p&gt;
+&lt;p&gt;Why PowerShell and not Cake you might wonder if you know about
+my involvement in the Cake project, and the reason is simple;
+I want this guide to be as build agnostic as it can be, but
+don't worry, I will follow up with a detailed guide of how to
+convert the PowerShell script to a fully fledged Cake build script.&lt;/p&gt;
+&lt;p&gt;Start with creating the project.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; mkdir autorest-example
+&amp;gt; cd autorest-example
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now we want to create a source directory where the source code
+for our API project will live.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; mkdir src
+&amp;gt; cd src
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We continue by creating a solution file, and the two projects I
+mention above using the dotnet CLI.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; dotnet new sln --name AutoRestExample
+&amp;gt; dotnet new webapi --name Sample.Api
+&amp;gt; dotnet new classlib --name Sample.Client
+&amp;gt; dotnet sln AutoRestExample.sln add ./Sample.Api/Sample.Api.csproj
+&amp;gt; dotnet sln AutoRestExample.sln add ./Sample.Client/Sample.Client.csproj
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;After this is done you can open the solution file in your editor of choice.
+For this tutorial/guide I will be using Visual Studio, but nothing
+stops you from using Visual Studio Code, Rider or a similar IDE/editor.&lt;/p&gt;
+&lt;h2 id="modifying-the-api-project"&gt;Modifying the API project&lt;/h2&gt;
+&lt;p&gt;We're going to use a library called &lt;code&gt;Swashbuckle&lt;/code&gt; to generate the OpenAPI
+specification directly from our ASP.NET Core controllers, so we will need to
+install the necessary NuGet packages.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="http://nuget.org/packages/Swashbuckle.AspNetCore"&gt;Swashbuckle.AspNetCore&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://www.nuget.org/packages/Swashbuckle.AspNetCore.Annotations"&gt;Swashbuckle.AspNetCore.Annotations&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We will also need the &lt;code&gt;Swashbuckle.AspNetCore.Cli&lt;/code&gt; tool installed as part of
+our project. This is not a package reference but a &lt;a href="https://docs.microsoft.com/en-us/dotnet/core/tools/extensibility#per-project-based-extensibility"&gt;project tool&lt;/a&gt;, so we will need
+to add the tool to our csproj manually. Right click on the &lt;code&gt;Sample.Api&lt;/code&gt; project
+in the solution explorer and paste the following snippet somewhere under the
+&lt;code&gt;&amp;lt;Project&amp;gt;&lt;/code&gt; node.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;ItemGroup&amp;gt;
+  &amp;lt;DotNetCliToolReference Include=&amp;quot;Swashbuckle.AspNetCore.Cli&amp;quot; Version=&amp;quot;3.0.0-beta1&amp;quot; /&amp;gt;
+&amp;lt;/ItemGroup&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="the-controller"&gt;The controller&lt;/h3&gt;
+&lt;p&gt;Open up &lt;code&gt;Controllers/ValuesController.cs&lt;/code&gt; and replace the content with the following
+code:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+
+namespace Sample.Api.Controllers
+{
+    [ApiController]
+    [Route(&amp;quot;api/[controller]&amp;quot;)]
+    public class ValuesController : ControllerBase
+    {
+        [HttpGet]
+        [ProducesResponseType(typeof(ICollection&amp;lt;string&amp;gt;), 200)]
+        [SwaggerOperation(OperationId = &amp;quot;Values_GetAll&amp;quot;)]
+        public ActionResult&amp;lt;ICollection&amp;lt;string&amp;gt;&amp;gt; Get()
+        {
+            return new string[] { &amp;quot;foo&amp;quot;, &amp;quot;bar&amp;quot; };
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;As you can see we have a method that returns a collection of string. We've decorated
+the method with two additional attributes that tells &lt;code&gt;Swashbuckle&lt;/code&gt; that this method
+will return a collection of strings if the HTTP response code is &lt;code&gt;200&lt;/code&gt;. We're also
+setting an &lt;a href=""&gt;Swagger operation ID&lt;/a&gt; for the method that will be used when we generate
+our client.&lt;/p&gt;
+&lt;h3 id="wiring-up-the-api"&gt;Wiring up the API&lt;/h3&gt;
+&lt;p&gt;We now have a controller that's decorated with the necessary attributes for &lt;code&gt;Swashbuckle&lt;/code&gt;
+to generate a Swagger specification from it. We now have to wire everything up in the
+&lt;code&gt;Startup.cs&lt;/code&gt; file.&lt;/p&gt;
+&lt;p&gt;In the &lt;code&gt;ConfigureServices&lt;/code&gt; method, add the following code that will tell &lt;code&gt;Swashbuckle&lt;/code&gt; that
+we've annotated our controllers with annotations, and provide some metadata for the API.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;services.AddSwaggerGen(c =&amp;gt;
+{
+    c.EnableAnnotations();
+    c.SwaggerDoc(&amp;quot;v1&amp;quot;, new Info
+    {
+        Title = &amp;quot;Sample API&amp;quot;,
+        Version = &amp;quot;v1&amp;quot;
+    });
+});
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We now have to add the &lt;code&gt;Swashbuckle&lt;/code&gt; middleware to our application pipeline which we do by
+adding the following code last in the &lt;code&gt;Configure&lt;/code&gt; method. You can also (optionally) add
+the UI, but this is not required for what we're trying to achieve.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;app.UseSwagger();
+
+// Optional
+app.UseSwaggerUI(c =&amp;gt;
+{
+    c.SwaggerEndpoint(&amp;quot;/swagger/v1/swagger.json&amp;quot;, &amp;quot;Sample API&amp;quot;);
+});
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If you run the project and navigate to &lt;code&gt;/swagger/v1/swagger.json&lt;/code&gt;, you will see
+the generated Swagger specification that represents our API.&lt;/p&gt;
+&lt;h3 id="modifying-the-client-project"&gt;Modifying the client project&lt;/h3&gt;
+&lt;p&gt;The last thing we need to do before actually generating a client is to add a
+reference to the &lt;code&gt;Microsoft.Rest.ClientRuntime&lt;/code&gt; NuGet package in the &lt;code&gt;Sample.Client&lt;/code&gt; project.
+This package contains everything that a generated &lt;code&gt;AutoRest&lt;/code&gt; client requires to work.&lt;/p&gt;
+&lt;h2 id="generating-the-client-code"&gt;Generating the client code&lt;/h2&gt;
+&lt;p&gt;Now we want to start generating the client code, but we don't want to get the Swagger
+document by starting the API and retrieving it. It's absolutely possible but will be hard
+to automate.&lt;/p&gt;
+&lt;p&gt;It's here the &lt;code&gt;Swashbuckle.AspNetCore.Cli&lt;/code&gt; package comes into play.&lt;br /&gt;
+What this package does is to allow to generate the Swagger document from a built assembly
+instead of invoking the Swagger endpoint of our API project.&lt;/p&gt;
+&lt;p&gt;What we need to do now is:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Build the Sample.API project.&lt;/li&gt;
+&lt;li&gt;Generate the Swagger definition from the built assembly.&lt;/li&gt;
+&lt;li&gt;Generate the client from the Swagger definition using &lt;code&gt;AutoRest&lt;/code&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Like I mentioned before, we're going to use PowerShell to do this, so go ahead and create
+a &lt;code&gt;Generate.ps1&lt;/code&gt; file in the root of our project structure. The file should look like following:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-powershell"&gt;Set-Location src
+
+# Build project.
+dotnet build
+
+# Create the Swagger file from the API assembly.
+Set-Location Sample.Api
+dotnet swagger &amp;quot;tofile&amp;quot; --output &amp;quot;../../res/swagger.json&amp;quot; &amp;quot;../Sample.Api/bin/Debug/netcoreapp2.1/Sample.Api.dll&amp;quot; v1
+Set-Location ..
+
+# Clear the previously generated code.
+Remove-Item &amp;quot;Sample.Client/Generated&amp;quot; -Force -Recurse
+
+# Generate a C# client from the Swagger definition and
+# override the namespace and the client name.
+autorest --input-file=&amp;quot;../res/swagger.json&amp;quot; `
+         --output-folder=&amp;quot;Sample.Client/Generated&amp;quot; `
+         --namespace=&amp;quot;Sample.Client&amp;quot; `
+         --override-client-name=&amp;quot;SampleClient&amp;quot; `
+         --csharp
+
+# Reset the location.
+Set-Location ..
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;By running this script you should find a folder called &lt;code&gt;Generated&lt;/code&gt; in the Client project
+containing the API client.&lt;/p&gt;
+&lt;p&gt;All classes are partial (as well as some methods) so if you need to inject your own logic
+or change some behavior (such as authentication), you have the possibility to do so.&lt;/p&gt;
+&lt;h2 id="closing-up"&gt;Closing up&lt;/h2&gt;
+&lt;p&gt;This tutorial just goes through the basics of how to generate an API client, but there is
+a myriad of other options that you can use to customize the generated client to your
+exact needs. I've personally haven't encountered a single scenario that couldn't be solved
+by one of the extensibility points in the generated code.&lt;/p&gt;
+&lt;p&gt;I also recommend you to always commit the generated Swagger file as part of your repository.
+That way you always have a way to quickly regenerate the client if you manage to break something.&lt;/p&gt;
+&lt;p&gt;You can find the source code to this blog post at
+&lt;a href="https://github.com/patriksvensson/autorest-example"&gt;https://github.com/patriksvensson/autorest-example&lt;/a&gt;&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;This blog post looks at automatically generating an HTTP API client
+from a &lt;a href="https://swagger.io/specification/"&gt;OpenAPI specification&lt;/a&gt;
+(formerly swagger) using &lt;a href="http://azure.github.io/autorest/"&gt;AutoRest&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;We will also use another tool called &lt;a href="https://github.com/domaindrivendev/Swashbuckle.AspNetCore"&gt;Swashbuckle&lt;/a&gt;
+which is an ASP.NET Core library that allows us to annotate our
+controllers with metadata that is used to generate OpenAPI specifications.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2018/04/an-introduction-to-spectre-cli</id>
+		<title>An introduction to Spectre.Cli</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2018/04/an-introduction-to-spectre-cli" />
+		<updated>2018-04-10T00:00:00Z</updated>
+		<content>&lt;p&gt;I've been writing a lot of CLI apps, both at work and in my free time, and there's never really
+been a command line parsing framework that has fitted my needs. While being either too complex
+or too simple, it's always nagged me that I need to write so much code myself. What I wanted
+was a way to be declarative about my commands, options and arguments while still allowing
+composition of them.&lt;/p&gt;
+&lt;p&gt;So a year back or something like that I decided to build a small framework upon
+&lt;code&gt;Microsoft.Extensions.CommandLineUtils&lt;/code&gt; that would allow me to write my applications like I wanted to,
+and it worked great (although with a lot of duct tape).&lt;/p&gt;
+&lt;p&gt;That was until I ran into bugs and other annoyances in the underlying library and discovered
+that they didn't accept any pull request since the library was stable for their needs
+and not under active development. So I decided to rip out Microsoft's library and replace
+it with something else, and &lt;a href="https://github.com/spectresystems/spectre.cli"&gt;Spectre.Cli&lt;/a&gt; was born.&lt;/p&gt;
+&lt;h2 id="how-does-it-work"&gt;How does it work?&lt;/h2&gt;
+&lt;p&gt;The underlying philosophy behing Spectre.Cli is to rely on the .NET type system to
+declare the commands, but tie everything together via composition.&lt;/p&gt;
+&lt;p&gt;Imagine the following command structure:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;dotnet &lt;em&gt;(executable)&lt;/em&gt;
+&lt;ul&gt;
+&lt;li&gt;add &lt;code&gt;[PROJECT]&lt;/code&gt;
+&lt;ul&gt;
+&lt;li&gt;package &lt;code&gt;&amp;lt;PACKAGE_NAME&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;reference &lt;code&gt;&amp;lt;PROJECT_REFERENCE&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For this I would like to implement the commands (the different levels in the tree that
+executes something) separately from the settings (the options, flags and arguments),
+which I want to be able to inherit from each other.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;public class AddSettings : CommandSettings
+{
+    [CommandArgument(0, &amp;quot;[PROJECT]&amp;quot;)]
+    public string Project { get; set; }
+}
+
+public class AddPackageSettings : AddSettings
+{
+    [CommandArgument(0, &amp;quot;&amp;lt;PACKAGE_NAME&amp;gt;&amp;quot;)]
+    public string PackageName { get; set; }
+
+    [CommandOption(&amp;quot;-v|--version &amp;lt;VERSION&amp;gt;&amp;quot;)]
+    public string Version { get; set; }
+}
+
+public class AddReferenceSettings : AddSettings
+{
+    [CommandArgument(0, &amp;quot;&amp;lt;PROJECT_REFERENCE&amp;gt;&amp;quot;)]
+    public string ProjectReference { get; set; }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;public class AddPackageCommand : Command&amp;lt;AddPackageSettings&amp;gt;
+{
+    public override int Execute(AddPackageSettings settings, ILookup&amp;lt;string, string&amp;gt; remaining)
+    {
+        // Omitted
+    }
+}
+
+public class AddReferenceCommand : Command&amp;lt;AddReferenceSettings&amp;gt;
+{
+    public override int Execute(AddReferenceSettings settings, ILookup&amp;lt;string, string&amp;gt; remaining)
+    {
+        // Omitted
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now when we have our commands and settings implemented, we can compose a command tree
+that tells the parser how to interpret user input.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;using Spectre.Cli;
+
+namespace MyApp
+{
+    public static class Program
+    {
+        public static int Main(string[] args)
+        {
+            var app = new CommandApp();
+
+            app.Configure(config =&amp;gt;
+            {
+                config.AddBranch&amp;lt;AddSettings&amp;gt;(&amp;quot;add&amp;quot;, add =&amp;gt;
+                {
+                    add.AddCommand&amp;lt;AddPackageCommand&amp;gt;(&amp;quot;package&amp;quot;);
+                    add.AddCommand&amp;lt;AddReferenceCommand&amp;gt;(&amp;quot;reference&amp;quot;);
+                });
+            });
+
+            return app.Run(args);
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now you might wonder, why do things like this? Well, for starters the different parts
+of the application are separated, while still having the option to share things like options,
+flags and arguments between them.&lt;/p&gt;
+&lt;p&gt;This make the resulting code very clean and easy to navigate, not to mention to unit test.
+And most importantly at all, the type system guides me to do the right thing. I can't configure
+commands in non-compatible ways, and if I want to add a new top-level &lt;code&gt;add-package&lt;/code&gt; command
+(or move the command completely), it's just a single line to change. This makes it easy to
+experiment and makes the CLI experience a first class citizen of your application.&lt;/p&gt;
+&lt;h2 id="errors"&gt;Errors&lt;/h2&gt;
+&lt;p&gt;I've also put some time in making the help screens and errors more intuitive than most other
+command line parsing frameworks.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/command_help.png" alt="Help" /&gt;&lt;br /&gt;
+&lt;img src="/images/command_error.png" alt="Error" /&gt;&lt;/p&gt;
+&lt;h2 id="what-else"&gt;What else?&lt;/h2&gt;
+&lt;p&gt;This article was meant as an introduction to Spectre.Cli, but the framework itself contains a
+lot of other things as well such as dependency injection, validation and async/await support.
+More about that in a later blog post!&lt;/p&gt;
+&lt;p&gt;If you want to see Spectre.Cli in action I recommend you to take a look at the
+&lt;a href="https://github.com/spectresystems/spectre.cli/tree/develop/samples"&gt;sample applications&lt;/a&gt; in the
+source code repository.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;I've been writing a lot of CLI apps, both at work and in my free time, and there's never really
+been a command line parsing framework that has fitted my needs. While being either too complex
+or too simple, it's always nagged me that I need to write so much code myself. What I wanted
+was a way to be declarative about my commands, options and arguments while still allowing
+composition of them.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2018/02/debugging-rust-on-windows-using-vscode</id>
+		<title>Debugging Rust on Windows using Visual Studio Code</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2018/02/debugging-rust-on-windows-using-vscode" />
+		<updated>2018-02-01T00:00:00Z</updated>
+		<content>&lt;p&gt;I recently wanted to debug a Rust program on Windows that I had written, and was struggling with how to get it to work. Since there was quite a lot of hoops to jump through to get it to work, I though I should share it with other people as well. I've written this blog post from memory and I'm far from an expert in LLVM or Rust, so if you see something strange here then let me know.&lt;/p&gt;
+&lt;p&gt;The drawback of this approach is that you can't debug applications built using the MSVC toolchain. If you know how to do this, please tell me. I would really appreciate it.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;UPDATE 2018-02-02:&lt;/strong&gt;&lt;br /&gt;
+As &lt;a href="https://twitter.com/studoot/status/959093798692380672"&gt;Stuart Dootson pointed out to me&lt;/a&gt;, there's a guide on how to debug applications using the MSVC toolchain &lt;a href="http://www.brycevandyk.com/debug-rust-on-windows-with-visual-studio-code-and-the-msvc-debugger/"&gt;here&lt;/a&gt;. I haven't tried this out myself, but it looks promising. Thanks Stuart!&lt;/p&gt;
+&lt;h3 id="install-llvm"&gt;1. Install LLVM&lt;/h3&gt;
+&lt;p&gt;First we need to install LLVM which is a compiler infrastructure. Part of LLVM is LLDB which is the debugger we're going to use. The latest version of LLVM doesn't include Python support for LLDB which is required for the VSCode extension, so we need to download a custom built version and install that.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://github.com/vadimcn/llvm/releases"&gt;https://github.com/vadimcn/llvm/releases&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id="install-python"&gt;2. Install Python&lt;/h3&gt;
+&lt;p&gt;We now need to install Python v3.5 (Not v3.6).&lt;br /&gt;
+&lt;a href="https://www.python.org/downloads/release/python-354/"&gt;https://www.python.org/downloads/release/python-354/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;If you installed the x64 version of LLVM, make sure that you install the x64 version of Python as well, otherwise you will encounter problems later on.&lt;/p&gt;
+&lt;h3 id="make-sure-it-works"&gt;3. Make sure it works&lt;/h3&gt;
+&lt;p&gt;Make sure that lldb can use scripting. If this doesn't work, make sure that both LLVM and Python is on PATH.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;C:&amp;gt; lldb
+(lldb) script
+Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Write &lt;code&gt;exit()&lt;/code&gt; to close the Python interpreter and then &lt;code&gt;CTRL+C&lt;/code&gt; to break out of LLDB.&lt;/p&gt;
+&lt;h3 id="install-the-vscode-extension"&gt;4. Install the VSCode extension&lt;/h3&gt;
+&lt;p&gt;We now need to install the &lt;code&gt;vscode-lldb&lt;/code&gt; extension for Visual Studio Code. This is what makes it possible to debug our Rust code from Visual Studio Code.&lt;br /&gt;
+&lt;a href="https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb"&gt;https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id="install-the-rust-gnu-toolchain"&gt;5. Install the Rust GNU toolchain&lt;/h3&gt;
+&lt;p&gt;Since LLDB doesn't work with the msvc compiler, we need to install the Rust GNU toolschain and use that one. This have some drawbacks though such as we won't be able to intop with software produced by Visual Studio.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;C:&amp;gt; rustup install stable-gnu
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="set-the-active-toolchain"&gt;6. Set the active toolchain&lt;/h3&gt;
+&lt;p&gt;We now need to set the Rust GNU toolchain as the active toolchain. We do this by using the &lt;code&gt;rustup&lt;/code&gt; command again.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;C:&amp;gt; rustup default stable-gnu
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We should now verify what our toolchain configuration look like by using &lt;code&gt;rustup show&lt;/code&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;C:&amp;gt; rustup show
+Default host: x86_64-pc-windows-msvc
+
+installed toolchains
+--------------------
+
+stable-x86_64-pc-windows-gnu (default)
+stable-x86_64-pc-windows-msvc
+beta-x86_64-pc-windows-msvc
+nightly-2017-12-08-x86_64-pc-windows-msvc
+nightly-x86_64-pc-windows-msvc
+
+active toolchain
+----------------
+
+stable-x86_64-pc-windows-gnu (default)
+rustc 1.23.0 (766bd11c8 2018-01-01)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="create-a-project"&gt;7. Create a project&lt;/h3&gt;
+&lt;p&gt;Create a new project called &lt;code&gt;hello_world&lt;/code&gt;.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;C:\Source&amp;gt; cargo new --bin hello_world
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Open Visual Studio Code and go to &lt;code&gt;./src/main.rs&lt;/code&gt; and place a breakpoint.&lt;/p&gt;
+&lt;h3 id="edit-launch.json"&gt;8. Edit launch.json&lt;/h3&gt;
+&lt;p&gt;Press F5 to run the project. A selection box will appear that will ask you what environment you want to use. Choose &lt;code&gt;LLDB Debugger&lt;/code&gt; here. This will open up the &lt;code&gt;launch.json&lt;/code&gt; file, and here we need to tell Visual Studio Code how to launch our project. Edit the file so it looks similar to this:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    &amp;quot;version&amp;quot;: &amp;quot;0.2.0&amp;quot;,
+    &amp;quot;configurations&amp;quot;: [
+        {
+            &amp;quot;type&amp;quot;: &amp;quot;lldb&amp;quot;,
+            &amp;quot;request&amp;quot;: &amp;quot;launch&amp;quot;,
+            &amp;quot;name&amp;quot;: &amp;quot;Debug&amp;quot;,
+            &amp;quot;program&amp;quot;: &amp;quot;${workspaceRoot}/target/debug/hello_world&amp;quot;,
+            &amp;quot;args&amp;quot;: [],
+            &amp;quot;cwd&amp;quot;: &amp;quot;${workspaceRoot}/target/debug/&amp;quot;
+        }
+    ]
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="profit"&gt;9. Profit&lt;/h3&gt;
+&lt;p&gt;Press F5 again. You should now be debugging your code.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/rust-debugging.png" alt="Debugging Rust" /&gt;&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;I recently wanted to debug a Rust program on Windows that I had written, and was struggling with how to get it to work. Since there was quite a lot of hoops to jump through to get it to work, I though I should share it with other people as well. I've written this blog post from memory and I'm far from an expert in LLVM or Rust, so if you see something strange here then let me know.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2018/01/calculating-msi-product-version</id>
+		<title>Calculating product versions for MSI packages compatible with semantic versioning</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2018/01/calculating-msi-product-version" />
+		<updated>2018-01-30T00:00:00Z</updated>
+		<content>&lt;p&gt;In my new project &lt;a href="https://github.com/spectresystems/jarvis"&gt;Jarvis&lt;/a&gt; I wanted to start
+generate preview versions of the MSI packages, but one problem with that is that MSI
+requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;A solution to this is to use the following formula (originally found &lt;a href="https://github.com/semver/semver/issues/332"&gt;here&lt;/a&gt;), where &lt;code&gt;PRE&lt;/code&gt; is the pre-release number (normally the number of commits for the current patch).&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;ENSURE (PATCH &amp;gt;= 0 &amp;amp;&amp;amp; PATCH &amp;lt; 54)
+ENSURE (PRE &amp;gt;= 0 &amp;amp;&amp;amp; PRE &amp;lt; 1000)
+
+PATCH = 10000 + (PATCH * 1000) + PRE
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Which would result in the following versions.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Semantic version&lt;/th&gt;
+&lt;th&gt;Patch&lt;/th&gt;
+&lt;th&gt;Pre-release&lt;/th&gt;
+&lt;th&gt;MSI version&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;1.2.0-alpha1&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;1.2.10001&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1.2.0-alpha2&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;1.2.10002&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1.2.0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;1.2.10003&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1.2.3-alpha1&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;1.2.40001&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1.2.3&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;1.2.40002&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1.2.53-alpha32&lt;/td&gt;
+&lt;td&gt;53&lt;/td&gt;
+&lt;td&gt;32&lt;/td&gt;
+&lt;td&gt;1.2.63032&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1.2.53&lt;/td&gt;
+&lt;td&gt;53&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;1.2.63033&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;This is not by any means fool-proof but might act like a good starting point.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;In my new project &lt;a href="https://github.com/spectresystems/jarvis"&gt;Jarvis&lt;/a&gt; I wanted to start
+generate preview versions of the MSI packages, but one problem with that is that MSI
+requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2017/12/binding-to-a-richtextbox-in-wpf</id>
+		<title>Binding to a RichTextBox in WPF</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2017/12/binding-to-a-richtextbox-in-wpf" />
+		<updated>2017-12-11T00:00:00Z</updated>
+		<content>&lt;p&gt;I've been doing some WPF development the last couple of weeks, and one thing that bugged me was that there is no way (as far as I know) to bind content to a &lt;code&gt;RichTextBox&lt;/code&gt;. This makes it kind of difficult to follow the MVVM pattern since the view model needs intimate knowledge of the view.&lt;/p&gt;
+&lt;p&gt;In my case, I wanted to bind the textbox against a resource using a &lt;code&gt;pack://&lt;/code&gt; URI, so I threw together some code to do this. I am far from an expert on WPF, so if you have any suggestions then please let me know!&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;using System;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+
+namespace MyApp.Controls
+{
+    public sealed class BindableRichTextBox : RichTextBox
+    {
+        public static readonly DependencyProperty SourceProperty =
+            DependencyProperty.Register(&amp;quot;Source&amp;quot;,
+                typeof(Uri), typeof(BindableRichTextBox),
+                new PropertyMetadata(OnSourceChanged));
+
+        public Uri Source
+        {
+            get =&amp;gt; GetValue(SourceProperty) as Uri;
+            set =&amp;gt; SetValue(SourceProperty, value);
+        }
+
+        private static void OnSourceChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
+        {
+            if (obj is BindableRichTextBox rtf &amp;amp;&amp;amp; rtf.Source != null)
+            {
+                var stream = Application.GetResourceStream(rtf.Source);
+                if (stream != null)
+                {
+                    var range = new TextRange(rtf.Document.ContentStart, rtf.Document.ContentEnd);
+                    range.Load(stream.Stream, DataFormats.Rtf);
+                }
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You can now use a binding as you normally would in your XAML (or simply set it directly).&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;Window x:Class=&amp;quot;MyApp.MyView&amp;quot;
+        xmlns=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml/presentation&amp;quot;
+        xmlns:x=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml&amp;quot;
+        xmlns:d=&amp;quot;http://schemas.microsoft.com/expression/blend/2008&amp;quot;
+        xmlns:mc=&amp;quot;http://schemas.openxmlformats.org/markup-compatibility/2006&amp;quot;
+        xmlns:ui=&amp;quot;clr-namespace:MyApp.Controls&amp;quot;
+        mc:Ignorable=&amp;quot;d&amp;quot;&amp;gt;
+    &amp;lt;StackPanel&amp;gt;
+        &amp;lt;ui:BindableRichTextBox Source=&amp;quot;{Binding Licenses}&amp;quot; /&amp;gt;
+        &amp;lt;ui:BindableRichTextBox Source=&amp;quot;pack://application:,,,/MyApp;component/MyApp/Resources/Document.rtf&amp;quot; /&amp;gt;
+    &amp;lt;/StackPanel&amp;gt;
+&amp;lt;/Window&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+</content>
+		<summary>&lt;p&gt;I've been doing some WPF development the last couple of weeks, and one thing that bugged me was that there is no way (as far as I know) to bind content to a &lt;code&gt;RichTextBox&lt;/code&gt;. This makes it kind of difficult to follow the MVVM pattern since the view model needs intimate knowledge of the view.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2017/12/conditionals-in-xaml</id>
+		<title>Conditionals in XAML</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2017/12/conditionals-in-xaml" />
+		<updated>2017-12-03T00:00:00Z</updated>
+		<content>&lt;p&gt;Ever wanted to display things conditionally in XAML based on a pre-processor directive like &lt;code&gt;DEBUG&lt;/code&gt;?&lt;/p&gt;
+&lt;p&gt;Start by adding the following to your &lt;code&gt;AssemblyInfo.cs&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;#if DEBUG
+[assembly: XmlnsDefinition(&amp;quot;http://github.com/me/myproject/debug&amp;quot;, &amp;quot;MyProjectNamespace&amp;quot;)]
+#endif
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now, in your XAML file, you should be able to add a new namespace pointing to this definition. We also need to import the &lt;a href="https://docs.microsoft.com/en-us/dotnet/framework/wpf/advanced/markup-compatibility-mc-language-features"&gt;XAML compatibility&lt;/a&gt; namespace. To suppress the errors given by the XAML processor, use the &lt;code&gt;mc:Ignorable&lt;/code&gt; attribute.&lt;/p&gt;
+&lt;p&gt;You should now be able to use &lt;code&gt;AlternateContent&lt;/code&gt;, &lt;code&gt;Choice&lt;/code&gt; and (optionally) &lt;code&gt;Fallback&lt;/code&gt; elements in your XAML code to show
+different elements depending on your build configuration.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-xaml"&gt;&amp;lt;Window x:Class=&amp;quot;MyProjectNamespace.MyView&amp;quot;
+    xmlns=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml/presentation&amp;quot;
+    xmlns:x=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml&amp;quot;
+    xmlns:mc=&amp;quot;http://schemas.openxmlformats.org/markup-compatibility/2006&amp;quot;
+    xmlns:debug=&amp;quot;http://github.com/me/myproject/debug&amp;quot;
+    mc:Ignorable=&amp;quot;mc&amp;quot;&amp;gt;
+
+    &amp;lt;mc:AlternateContent&amp;gt;
+        &amp;lt;mc:Choice Requires=&amp;quot;debug&amp;quot;&amp;gt;
+            &amp;lt;TextBlock Text=&amp;quot;Debugging!&amp;quot; /&amp;gt;
+        &amp;lt;/mc:Choice&amp;gt;
+        &amp;lt;mc:Fallback&amp;gt;
+            &amp;lt;TextBlock Text=&amp;quot;Not debugging!&amp;quot; /&amp;gt;
+        &amp;lt;/mc:Fallback&amp;gt;
+    &amp;lt;/mc:AlternateContent&amp;gt;
+
+&amp;lt;/Window&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Be aware that content within &lt;code&gt;AlternateContent&lt;/code&gt; will not show in the designer. If this is something you need, I recommend that you use a different technique.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Update (2017-12-05)&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;AlternateContent&lt;/code&gt; element doesn't seem to be supported in UWP applications.&lt;/p&gt;
+&lt;blockquote class="twitter-tweet" data-lang="en"&gt;&lt;p lang="en" dir="ltr"&gt;WPF only. The attribute does not exist in UWP.&lt;/p&gt;&amp;mdash; diederik krols (&amp;#64;diederikkrols) &lt;a href="https://twitter.com/diederikkrols/status/937942865484898305?ref_src=twsrc%5Etfw"&gt;December 5, 2017&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src="https://platform.twitter.com/widgets.js" charset="utf-8"&gt;&lt;/script&gt;
+</content>
+		<summary>&lt;p&gt;Ever wanted to display things conditionally in XAML based on a pre-processor directive like &lt;code&gt;DEBUG&lt;/code&gt;?&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2017/11/using-embedded-resources-in-xunit-tests</id>
+		<title>Using embedded resources in xUnit tests</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2017/11/using-embedded-resources-in-xunit-tests" />
+		<updated>2017-11-11T00:00:00Z</updated>
+		<content>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
+&lt;a href="https://andrewlock.net/creating-parameterised-tests-in-xunit-with-inlinedata-classdata-and-memberdata"&gt;Creating parameterised tests in xUnit&lt;/a&gt;
+when I remembered something I wrote a while back that has proven to be quite useful.&lt;/p&gt;
+&lt;p&gt;The code in question allows you to use embedded resources with &lt;a href="https://xunit.github.io/docs/getting-started-desktop.html#write-first-theory"&gt;xUnit's theory concept&lt;/a&gt;
+(which is similar to a &lt;code&gt;TestCase&lt;/code&gt; in NUnit).&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Xunit.Sdk;
+
+namespace MyProject.Tests
+{
+    public sealed class EmbeddedResourceDataAttribute : DataAttribute
+    {
+        private readonly string[] _args;
+
+        public EmbeddedResourceDataAttribute(params string[] args)
+        {
+            _args = args;
+        }
+
+        public override IEnumerable&amp;lt;object[]&amp;gt; GetData(MethodInfo testMethod)
+        {
+            var result = new object[_args.Length];
+            for (var index = 0; index &amp;lt; _args.Length; index++)
+            {
+                result[index] = ReadManifestData(_args[index]);
+            }
+            return new[] { result };
+        }
+
+        public static string ReadManifestData(string resourceName)
+        {
+            var assembly = typeof(EmbeddedResourceDataAttribute).GetTypeInfo().Assembly;
+            resourceName = resourceName.Replace(&amp;quot;/&amp;quot;, &amp;quot;.&amp;quot;);
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException(&amp;quot;Could not load manifest resource stream.&amp;quot;);
+                }
+                using (var reader = new StreamReader(stream))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You can now use embedded resources in your tests like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;namespace MyProject.Tests
+{
+    public sealed class JediCouncilFixture
+    {
+        [Theory]
+        [EmbeddedResourceData(&amp;quot;MyProject.Tests/Data/File.json&amp;quot;)]
+        public void Should_Return_Expected_Advice_From_Jedi_Council(string json)
+        {
+            // Given
+            var expected = JsonConvert.DeserializeObject&amp;lt;Advice&amp;gt;(json);
+
+            // When
+            var result = JediCouncil.AskForAdvice();
+
+            // Then
+            Assert.Equal(expected, result, new AdviceComparer());
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+</content>
+		<summary>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
+&lt;a href="https://andrewlock.net/creating-parameterised-tests-in-xunit-with-inlinedata-classdata-and-memberdata"&gt;Creating parameterised tests in xUnit&lt;/a&gt;
+when I remembered something I wrote a while back that has proven to be quite useful.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2017/08/never-mutate-state-in-a-debug-assert-call</id>
+		<title>Never mutate state in a Debug.Assert call</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2017/08/never-mutate-state-in-a-debug-assert-call" />
+		<updated>2017-08-02T00:00:00Z</updated>
+		<content>&lt;p&gt;Yesterday I encountered a bug in a library I'm working on that only seemed
+to occur when compiled in release mode. I was scratching my head for a little
+while but suddenly it occured to me when I encountered the following line:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;Debug.Assert(reader.Read() == '-'); // Consume token
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The problem with the above statement is that calls to &lt;code&gt;Debug.Assert&lt;/code&gt; are conditional,
+so when running under a non-debug build, the call won't be made and the expression
+won't be evaluated.&lt;/p&gt;
+&lt;h2 id="so-what-lessons-can-we-learn-from-this"&gt;So what lessons can we learn from this?&lt;/h2&gt;
+&lt;p&gt;Never mutate state in a &lt;code&gt;Debug.Assert&lt;/code&gt; call.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;Yesterday I encountered a bug in a library I'm working on that only seemed
+to occur when compiled in release mode. I was scratching my head for a little
+while but suddenly it occured to me when I encountered the following line:&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2016/12/azure-web-apps-and-the-certificate-store</id>
+		<title>Azure Web Apps and the certificate store</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2016/12/azure-web-apps-and-the-certificate-store" />
+		<updated>2016-12-07T00:00:00Z</updated>
+		<content>&lt;p&gt;I was trying to load a certificate from the certificate store in an Azure Web App today,
+and for some reason I could not find it via it's thumbprint. Since I thought I was
+looking in the wrong certificate store, I went to &lt;a href="https://github.com/projectkudu/kudu"&gt;Kudu&lt;/a&gt;
+to take a closer look via the PowerShell debug console.&lt;/p&gt;
+&lt;p&gt;My code (probably) wasn't wrong but the certificate simply wasn't there.&lt;/p&gt;
+&lt;p&gt;After some googling I found out that WebApps in Azure doesn't have access to uploaded
+certificates unless you add a special AppSetting variable called &lt;code&gt;WEBSITE_LOAD_CERTIFICATES&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;You can either set this setting to a comma separated list of the certificate thumbprint that you want to expose,
+or you can do what I did (&lt;em&gt;YOLO™&lt;/em&gt;) and set it to &lt;code&gt;*&lt;/code&gt; which exposes all available certificates
+to the application.&lt;/p&gt;
+&lt;p&gt;Also, if you're interested in Kudu (which is awesome), check out &lt;a href="https://twitter.com/devlead"&gt;devlead&lt;/a&gt;'s
+appearance on &lt;em&gt;Azure Podcast&lt;/em&gt; where he spends 30 minutes or so talking about it:
+&lt;a href="http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter"&gt;http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter&lt;/a&gt;&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;I was trying to load a certificate from the certificate store in an Azure Web App today,
+and for some reason I could not find it via it's thumbprint. Since I thought I was
+looking in the wrong certificate store, I went to &lt;a href="https://github.com/projectkudu/kudu"&gt;Kudu&lt;/a&gt;
+to take a closer look via the PowerShell debug console.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2014/11/cake-and-appveyor-integration</id>
+		<title>Cake and AppVeyor integration</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2014/11/cake-and-appveyor-integration" />
+		<updated>2014-11-23T00:00:00Z</updated>
+		<content>&lt;p&gt;In this blog post I will show you how to use &lt;a href="https://github.com/cake-build/cake"&gt;Cake&lt;/a&gt; with your AppVeyor CI builds.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;h2 id="create-the-build-script"&gt;1. Create the build script&lt;/h2&gt;
+&lt;p&gt;Add a build script called &lt;code&gt;build.cake&lt;/code&gt; to the project root. In this tutorial, we'll just create a really simple build script for demonstration.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// Get the target.
+var target = Argument&amp;lt;string&amp;gt;(&amp;quot;target&amp;quot;, &amp;quot;Default&amp;quot;);
+
+Task(&amp;quot;Default&amp;quot;)
+  .Does(() =&amp;gt;
+{
+	Information(&amp;quot;Hello from Cake!&amp;quot;);
+});
+
+RunTarget(target);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="create-a-bootstrapper-script"&gt;2. Create a bootstrapper script&lt;/h2&gt;
+&lt;p&gt;Create a old fashioned batch file called &lt;code&gt;build.cmd&lt;/code&gt; that will download Cake and execute the build script.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;#64;echo off
+
+:Build
+cls
+
+if not exist tools\Cake\Cake.exe ( 
+	echo Installing Cake...
+	tools\NuGet.exe install Cake -OutputDirectory tools -ExcludeVersion -NonInteractive -Prerelease
+)
+
+echo Starting Cake...
+tools\Cake\Cake.exe build.cake -target=Default -verbosity=diagnostic
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="add-nuget.exe-to-your-repository"&gt;3. Add NuGet.exe to your repository&lt;/h2&gt;
+&lt;p&gt;Start by copying &lt;code&gt;NuGet.exe&lt;/code&gt; to your tools folder. Cake uses the &lt;code&gt;tools&lt;/code&gt; path as a convention for finding stuff it needs such as unit test runners and other tools.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;MyProject/
+&lt;ul&gt;
+&lt;li&gt;tools/
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;NuGet.exe&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;build.cake&lt;/li&gt;
+&lt;li&gt;build.cmd&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="tell-appveyor-what-to-do"&gt;4. Tell AppVeyor what to do&lt;/h2&gt;
+&lt;p&gt;Now we need to tell AppVeyor how to start the Cake build. Do this by setting the build script for your AppVeyor project to &lt;code&gt;build.cmd&lt;/code&gt;. Save your settings and you should be done.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/cake-appveyor-build-settings.png" alt="AppVeyor Build Settings" /&gt;&lt;/p&gt;
+&lt;h2 id="profit"&gt;5. Profit&lt;/h2&gt;
+&lt;p&gt;The next triggered build will now execute the Cake build script as expected.&lt;/p&gt;
+&lt;p&gt;&lt;img src="/images/cake-appveyor-profit.png" alt="AppVeyor Build" /&gt;&lt;/p&gt;
+&lt;p&gt;For more information about Cake, see &lt;a href="http://cake.readthedocs.org"&gt;http://cake.readthedocs.org&lt;/a&gt;.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;In this blog post I will show you how to use &lt;a href="https://github.com/cake-build/cake"&gt;Cake&lt;/a&gt; with your AppVeyor CI builds.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2014/08/script-aliases</id>
+		<title>Script aliases</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2014/08/script-aliases" />
+		<updated>2014-08-19T00:00:00Z</updated>
+		<content>&lt;p&gt;Cake supports something called script aliases. Script aliases are convenience methods that are easily accessible directly from a Cake script. Every &lt;a href="http://cake.readthedocs.org/en/latest/api-documentation.html"&gt;API method&lt;/a&gt; in Cake is implemented like this.&lt;/p&gt;
+&lt;p&gt;In this blog post I will show how to extend Cake with your own script aliases. It's really simple, I promise. ;-)&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;h2 id="creating-an-extension"&gt;Creating an extension&lt;/h2&gt;
+&lt;p&gt;Start by creating a new class library project and add a reference to the &lt;code&gt;Cake.Core&lt;/code&gt; NuGet package.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;PM&amp;gt; Install-Package Cake.Core
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Add the script alias method that you want to expose to your Cake script. A script alias method is simply an extension method for &lt;code&gt;ICakeContext&lt;/code&gt; that's been marked with the &lt;code&gt;CakeMethodAlias&lt;/code&gt; attribute.&lt;/p&gt;
+&lt;p&gt;You could also add an script alias property, which works the same way as a script alias method, except that it accepts no arguments and is marked with the &lt;code&gt;CakePropertyAlias&lt;/code&gt; attribute.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;using Cake.Core;
+using Cake.Core.Annotations;
+
+public static class MyCakeExtension
+{
+   [CakeMethodAlias]
+   public static int GetMagicNumber(this ICakeContext context, bool minValue)
+   {
+      return minValue ? int.MinValue : int.MaxValue;
+   }
+
+   [CakePropertyAlias]
+   public static int TheAnswerToLife(this ICakeContext context)
+   {
+      return 42;
+   }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="using-the-extension"&gt;Using the extension&lt;/h2&gt;
+&lt;p&gt;Compile the assembly and add a reference to it in the build script via the &lt;code&gt;#r&lt;/code&gt; directive.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;#r &amp;quot;tools/MyCakeExtension.dll&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now you should be able to call the method from the script.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;Task(&amp;quot;GetSomeAnswers&amp;quot;)
+   .Does(() =&amp;gt;
+{
+    // Write the values to the console. 
+    Information(&amp;quot;Magic number: {0}&amp;quot;, GetMagicNumber(false));
+    Information(&amp;quot;The answer to life: {0}&amp;quot;, TheAnswerToLife);
+});
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;This covers the basics of how to create script aliases in Cake.&lt;br /&gt;
+If you create a cool extension, tell me about it and I will link to it from the &lt;a href="https://github.com/cake-build/cake"&gt;Cake repository&lt;/a&gt;.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;Cake supports something called script aliases. Script aliases are convenience methods that are easily accessible directly from a Cake script. Every &lt;a href="http://cake.readthedocs.org/en/latest/api-documentation.html"&gt;API method&lt;/a&gt; in Cake is implemented like this.&lt;/p&gt;
+&lt;p&gt;In this blog post I will show how to extend Cake with your own script aliases. It's really simple, I promise. ;-)&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2014/07/its-not-a-party-without-cake</id>
+		<title>It's not a party without Cake</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2014/07/its-not-a-party-without-cake" />
+		<updated>2014-07-18T00:00:00Z</updated>
+		<content>&lt;p&gt;I have during my nine years as a (professional) programmer used several different build automation systems such as &lt;a href="https://github.com/ruby/rake"&gt;Rake&lt;/a&gt;, &lt;a href="https://github.com/psake/psake"&gt;psake&lt;/a&gt;, &lt;a href="http://www.cmake.org/"&gt;CMake&lt;/a&gt;, &lt;a href="http://msdn.microsoft.com/en-us/library/ms181709.aspx"&gt;TFS Build&lt;/a&gt; and &lt;a href="http://fsharp.github.io/FAKE/"&gt;FAKE&lt;/a&gt;, but none of these have allowed me to write my build scripts using C# - the language I use the most.&lt;/p&gt;
+&lt;p&gt;About two months ago I decided to change that and now it's time to formally introduce Cake, which is short for C# Make.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;&lt;img src="/images/cake-medium.png" alt="Build Status" /&gt;&lt;/p&gt;
+&lt;h2 id="what-is-cake"&gt;What is Cake?&lt;/h2&gt;
+&lt;p&gt;Cake is (like you probably already figured out) a build automation system with a C# DSL to do things like compiling code, copy files/folders, running unit tests, compress files and build NuGet packages.&lt;/p&gt;
+&lt;p&gt;Cake uses a &lt;a href="http://martinfowler.com/articles/rake.html#DependencyBasedProgramming"&gt;dependency based programming model&lt;/a&gt; just like Rake, FAKE and similar build automation systems where you declare &lt;em&gt;tasks&lt;/em&gt; and the dependencies between those. When you execute a task, Cake will construct a directed acyclic graph containing all tasks and execute these in the correct order.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;Task(&amp;quot;A&amp;quot;)
+    .Does(() =&amp;gt;
+{
+});
+
+Task(&amp;quot;B&amp;quot;)
+    .IsDependentOn(&amp;quot;A&amp;quot;);
+    .Does(() =&amp;gt;
+{
+});
+
+RunTarget(&amp;quot;B&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The goal of Cake is to be a first class alternative to those who - like me - want to write their build scripts in C# instead of Ruby, F# or Powershell.&lt;/p&gt;
+&lt;h2 id="what-does-a-cake-script-look-like"&gt;What does a Cake script look like?&lt;/h2&gt;
+&lt;p&gt;Assume our build script have four steps where we want to:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Clean up old artifacts.&lt;/li&gt;
+&lt;li&gt;Build the code.&lt;/li&gt;
+&lt;li&gt;Run unit tests.&lt;/li&gt;
+&lt;li&gt;Package generated artifacts.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;A build script like that could look something like this.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;var target = Argument&amp;lt;string&amp;gt;(&amp;quot;target&amp;quot;, &amp;quot;Package&amp;quot;);
+var config = Argument&amp;lt;string&amp;gt;(&amp;quot;config&amp;quot;, &amp;quot;Release&amp;quot;);
+
+Task(&amp;quot;Clean&amp;quot;)
+    .Does(() =&amp;gt;
+{
+    // Clean directories.
+    CleanDirectory(&amp;quot;./output&amp;quot;);
+    CleanDirectory(&amp;quot;./output/bin&amp;quot;);
+    CleanDirectories(&amp;quot;./src/**/bin/&amp;quot; + config);
+});
+
+Task(&amp;quot;Build&amp;quot;)
+    .IsDependentOn(&amp;quot;Clean&amp;quot;)
+    .Does(() =&amp;gt;
+{
+    // Build the solution using MSBuild.
+    MSBuild(&amp;quot;./src/Project.sln&amp;quot;, settings =&amp;gt; 
+        settings.SetConfiguration(config));     
+});
+
+Task(&amp;quot;RunUnitTests&amp;quot;)
+    .IsDependentOn(&amp;quot;Build&amp;quot;)
+    .Does(() =&amp;gt;
+{
+    // Run xUnit tests.
+    XUnit(&amp;quot;./src/**/bin/&amp;quot; + config + &amp;quot;/*.Tests.dll&amp;quot;);
+});
+
+Task(&amp;quot;CopyFiles&amp;quot;)
+    .IsDependentOn(&amp;quot;RunUnitTests&amp;quot;)
+    .Does(() =&amp;gt;
+{
+    var path = &amp;quot;./src/Project/bin/&amp;quot; + configuration;    
+    var files = GetFiles(path + &amp;quot;/**/*.dll&amp;quot;) 
+        + GetFiles(path + &amp;quot;/**/*.exe&amp;quot;);
+
+    // Copy all exe and dll files to the output directory.
+    CopyFiles(files, &amp;quot;./output/bin&amp;quot;);
+});    
+
+Task(&amp;quot;Package&amp;quot;)
+    .IsDependentOn(&amp;quot;RunUnitTests&amp;quot;)
+    .Does(() =&amp;gt;
+{
+    // Zip all files in the bin directory.
+    Zip(&amp;quot;./output/bin&amp;quot;, &amp;quot;./output/build.zip&amp;quot;);
+});
+
+RunTarget(target);
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;To run our build script we invoke &lt;code&gt;Cake.exe&lt;/code&gt; with the script file as the first argument, and (optionally) the name of our target task as the second argument. We can also tell Cake how much information we're interested in with the built in &lt;code&gt;verbosity&lt;/code&gt; parameter, which is very useful when debugging a script.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;C:&amp;gt; Cake.exe build.cake -target=Package -verbosity=diagnostic
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This is just an example. Much more functionality is already implemented such as support for &lt;code&gt;MSBuild&lt;/code&gt;, &lt;code&gt;MSTest&lt;/code&gt;, &lt;code&gt;xUnit&lt;/code&gt;, &lt;code&gt;NUnit&lt;/code&gt;, &lt;code&gt;ILMerge&lt;/code&gt;, &lt;code&gt;NuGet pack/restore&lt;/code&gt; and the most common file system operations such as &lt;code&gt;file/folder manipulation&lt;/code&gt; and &lt;code&gt;globbing&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;To see an actual build script in action, fork or clone the &lt;a href="https://github.com/cake-build/cake"&gt;GitHub repository&lt;/a&gt; and run &lt;code&gt;build.cmd&lt;/code&gt; which will download Cake from NuGet and run the &lt;code&gt;build.cake&lt;/code&gt; script.&lt;/p&gt;
+&lt;h2 id="what-now"&gt;What now?&lt;/h2&gt;
+&lt;p&gt;This was only supposed to be an introduction to Cake but I will blog more about this in the near future.&lt;/p&gt;
+&lt;p&gt;If you find this project interesting and want to help or you just have opinions about stuff, you can check out the full repository at &lt;a href="https://github.com/cake-build/cake"&gt;https://github.com/cake-build/cake&lt;/a&gt;.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;I have during my nine years as a (professional) programmer used several different build automation systems such as &lt;a href="https://github.com/ruby/rake"&gt;Rake&lt;/a&gt;, &lt;a href="https://github.com/psake/psake"&gt;psake&lt;/a&gt;, &lt;a href="http://www.cmake.org/"&gt;CMake&lt;/a&gt;, &lt;a href="http://msdn.microsoft.com/en-us/library/ms181709.aspx"&gt;TFS Build&lt;/a&gt; and &lt;a href="http://fsharp.github.io/FAKE/"&gt;FAKE&lt;/a&gt;, but none of these have allowed me to write my build scripts using C# - the language I use the most.&lt;/p&gt;
+&lt;p&gt;About two months ago I decided to change that and now it's time to formally introduce Cake, which is short for C# Make.&lt;/p&gt;</summary>
+	</entry>
+	<entry>
+		<id>https://patriksvensson.se/2014/06/the-singleton-logger</id>
+		<title>The singleton logger</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2014/06/the-singleton-logger" />
+		<updated>2014-06-18T00:00:00Z</updated>
+		<content>&lt;p&gt;It is widely accepted that you access logging frameworks via a static singleton instance, and most logging frameworks are designed to work like this. But why? Many people often refer to it as being a cross-cross cutting concern; and that it's therefore not important to do things by the book. Not only does most logging frameworks use the static singleton as a façade, but they also store process-wide state.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;Cross-cutting concern or not; most developers normally won't argue against the dependency inversion principle, but when it comes to logging it all seem forgotten. One can understand that logging should be simple, but if we went down that path we could justify anything by the same standard.&lt;/p&gt;
+&lt;p&gt;A static singleton is to me (in 99.99% of the cases) a sign that something is wrong; a code smell regardless of the justifications that should be handled with caution.&lt;/p&gt;
+&lt;h2 id="where-am-i-going-with-this"&gt;Where am I going with this?&lt;/h2&gt;
+&lt;p&gt;I've started using the excellent &lt;a href="http://serilog.net/"&gt;Serilog&lt;/a&gt; recently, and I was glad to see that while it provides a static log facade doesn't seem to encourage it for any other reason than to be more easily adoptable by other frameworks. I just visited their &lt;a href="https://github.com/serilog/serilog/wiki/Getting-Started"&gt;GitHub page&lt;/a&gt;, and in the footer you can read:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Configuring and using the Log class is an optional convenience that makes it easier for libraries to adopt Serilog. Serilog does not and will never adopt any static/process-wide state within the logging pipeline itself.&amp;quot;&amp;quot;.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Sounds like a small step in the right direction.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;It is widely accepted that you access logging frameworks via a static singleton instance, and most logging frameworks are designed to work like this. But why? Many people often refer to it as being a cross-cross cutting concern; and that it's therefore not important to do things by the book. Not only does most logging frameworks use the static singleton as a façade, but they also store process-wide state.&lt;/p&gt;</summary>
+	</entry>
+</feed>

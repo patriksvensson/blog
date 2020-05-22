@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - An introduction to Spectre.Cli</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - An introduction to Spectre.Cli" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2018/04/an-introduction-to-spectre-cli" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>An introduction to Spectre.Cli</h1>
+    <p><em>Published on Tuesday, April 10, 2018</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/csharp" class="button small ">C#</a></li>
+        <li><a role="button" href="/tags/cli" class="button small ">CLI</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>I've been writing a lot of CLI apps, both at work and in my free time, and there's never really
+been a command line parsing framework that has fitted my needs. While being either too complex
+or too simple, it's always nagged me that I need to write so much code myself. What I wanted
+was a way to be declarative about my commands, options and arguments while still allowing
+composition of them.</p>
+<p>So a year back or something like that I decided to build a small framework upon
+<code>Microsoft.Extensions.CommandLineUtils</code> that would allow me to write my applications like I wanted to,
+and it worked great (although with a lot of duct tape).</p>
+<p>That was until I ran into bugs and other annoyances in the underlying library and discovered
+that they didn't accept any pull request since the library was stable for their needs
+and not under active development. So I decided to rip out Microsoft's library and replace
+it with something else, and <a href="https://github.com/spectresystems/spectre.cli">Spectre.Cli</a> was born.</p>
+<h2 id="how-does-it-work">How does it work?</h2>
+<p>The underlying philosophy behing Spectre.Cli is to rely on the .NET type system to
+declare the commands, but tie everything together via composition.</p>
+<p>Imagine the following command structure:</p>
+<ul>
+<li>dotnet <em>(executable)</em>
+<ul>
+<li>add <code>[PROJECT]</code>
+<ul>
+<li>package <code>&lt;PACKAGE_NAME&gt;</code></li>
+<li>reference <code>&lt;PROJECT_REFERENCE&gt;</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>For this I would like to implement the commands (the different levels in the tree that
+executes something) separately from the settings (the options, flags and arguments),
+which I want to be able to inherit from each other.</p>
+<pre><code class="language-csharp">public class AddSettings : CommandSettings
+{
+    [CommandArgument(0, &quot;[PROJECT]&quot;)]
+    public string Project { get; set; }
+}
+
+public class AddPackageSettings : AddSettings
+{
+    [CommandArgument(0, &quot;&lt;PACKAGE_NAME&gt;&quot;)]
+    public string PackageName { get; set; }
+
+    [CommandOption(&quot;-v|--version &lt;VERSION&gt;&quot;)]
+    public string Version { get; set; }
+}
+
+public class AddReferenceSettings : AddSettings
+{
+    [CommandArgument(0, &quot;&lt;PROJECT_REFERENCE&gt;&quot;)]
+    public string ProjectReference { get; set; }
+}
+</code></pre>
+<pre><code class="language-csharp">public class AddPackageCommand : Command&lt;AddPackageSettings&gt;
+{
+    public override int Execute(AddPackageSettings settings, ILookup&lt;string, string&gt; remaining)
+    {
+        // Omitted
+    }
+}
+
+public class AddReferenceCommand : Command&lt;AddReferenceSettings&gt;
+{
+    public override int Execute(AddReferenceSettings settings, ILookup&lt;string, string&gt; remaining)
+    {
+        // Omitted
+    }
+}
+</code></pre>
+<p>Now when we have our commands and settings implemented, we can compose a command tree
+that tells the parser how to interpret user input.</p>
+<pre><code class="language-csharp">using Spectre.Cli;
+
+namespace MyApp
+{
+    public static class Program
+    {
+        public static int Main(string[] args)
+        {
+            var app = new CommandApp();
+
+            app.Configure(config =&gt;
+            {
+                config.AddBranch&lt;AddSettings&gt;(&quot;add&quot;, add =&gt;
+                {
+                    add.AddCommand&lt;AddPackageCommand&gt;(&quot;package&quot;);
+                    add.AddCommand&lt;AddReferenceCommand&gt;(&quot;reference&quot;);
+                });
+            });
+
+            return app.Run(args);
+        }
+    }
+}
+</code></pre>
+<p>Now you might wonder, why do things like this? Well, for starters the different parts
+of the application are separated, while still having the option to share things like options,
+flags and arguments between them.</p>
+<p>This make the resulting code very clean and easy to navigate, not to mention to unit test.
+And most importantly at all, the type system guides me to do the right thing. I can't configure
+commands in non-compatible ways, and if I want to add a new top-level <code>add-package</code> command
+(or move the command completely), it's just a single line to change. This makes it easy to
+experiment and makes the CLI experience a first class citizen of your application.</p>
+<h2 id="errors">Errors</h2>
+<p>I've also put some time in making the help screens and errors more intuitive than most other
+command line parsing frameworks.</p>
+<p><img src="/images/command_help.png" alt="Help" /><br />
+<img src="/images/command_error.png" alt="Error" /></p>
+<h2 id="what-else">What else?</h2>
+<p>This article was meant as an introduction to Spectre.Cli, but the framework itself contains a
+lot of other things as well such as dependency injection, validation and async/await support.
+More about that in a later blog post!</p>
+<p>If you want to see Spectre.Cli in action I recommend you to take a look at the
+<a href="https://github.com/spectresystems/spectre.cli/tree/develop/samples">sample applications</a> in the
+source code repository.</p>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

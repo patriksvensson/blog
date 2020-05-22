@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - Culture agnostic string comparisons</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - Culture agnostic string comparisons" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2013/08/culture-agnostic-string-comparisons" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>Culture agnostic string comparisons</h1>
+    <p><em>Published on Thursday, August 22, 2013</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/net" class="button small ">.NET</a></li>
+        <li><a role="button" href="/tags/csharp" class="button small ">C#</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>Something I've seen a lot at different clients is naive string comparison. The most common case is to do something involving String.ToLower() on both strings that are being compared and then an equality comparison of the result.</p>
+<!--excerpt-->
+<p>This is not always the correct way of doing it, and especially not if you at some point in time want people who's using different culture settings than you to run your application. You can read more about this problem in <a href="http://www.codinghorror.com/blog/2008/03/whats-wrong-with-turkey.html">this excellent blog post by Jeff Atwood</a>.</p>
+<p>What you should do is simply to use the overloads of the <a href="http://msdn.microsoft.com/en-us/library/c64xh8f9.aspx">String.Equals</a> method that takes a <code>StringComparison</code>, or use a <a href="http://msdn.microsoft.com/en-us/library/system.stringcomparer.aspx">StringComparer</a> directly.</p>
+<pre><code>[Fact]
+public void Test_String_Equality()
+{
+   // Given
+   string first = &quot;HELLO WORLD&quot;;
+   string second = &quot;hello world&quot;;
+
+   // When
+   bool result = first.Equals(second, StringComparison.OrdinalIgnoreCase);
+
+   // Then
+   Assert.True(result);
+}
+</code></pre>
+<p>The <code>StringComparer</code> is also very valuable to use with collections when you need to do a lookup for a specific string (i.e. <code>HashSet&lt;string&gt;</code> or <code>IDictionary&lt;String, T&gt;</code>).</p>
+<pre><code>[Fact]
+public void Test_String_Lookup()
+{
+   // Given
+   var dictionary = new Dictionary&lt;string, int&gt;(StringComparer.OrdinalIgnoreCase);
+   dictionary.Add(&quot;HELLO WORLD&quot;, 42);
+
+   // When
+   var result = dictionary.ContainsKey(&quot;hello world&quot;);
+
+   // Then
+   Assert.True(result);
+}
+</code></pre>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

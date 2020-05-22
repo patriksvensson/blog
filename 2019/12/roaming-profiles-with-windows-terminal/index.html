@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - Roaming profiles with Windows Terminal</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/assets/css/highlight.css" rel="stylesheet">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="Driving Digital Transformation on Serverless Containers..." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - Roaming profiles with Windows Terminal" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2019/12/roaming-profiles-with-windows-terminal" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="/assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>Roaming profiles with Windows Terminal</h1>
+    <p><em>Published on Monday, December 2, 2019</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/windows-10" class="button small ">Windows 10</a></li>
+        <li><a role="button" href="/tags/windows-terminal" class="button small ">Windows Terminal</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>If you have more than one computer that you use, you might have noticed
+that it requires some work to keep your Windows Terminal profile up to date.</p>
+<p>I've always been a fan of keeping configuration files and similar in
+version control but sadly Windows Terminal doesn't support merging
+external configurations with the main one. I've
+<a href="https://github.com/microsoft/terminal/issues/2933">opened an issue</a>
+in Windows Terminals GitHub repository suggesting this, but until that has
+been implemented you can work around this by creating a symlink to
+the configuration file in a Git repository or similar.</p>
+<p>Below you see a small PowerShell script which will do this for you.</p>
+<pre><code class="language-powershell">###############
+# Install.ps1 #
+###############
+
+# Make sure Windows Terminal have been installed.
+$TerminalPath = Join-Path $Env:LOCALAPPDATA &quot;Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe&quot;;
+if(!(Test-Path $TerminalPath)) {
+    Throw &quot;Windows Terminal have not been installed.&quot;
+}
+
+# Create symlink to Windows Terminal settings.
+$TerminalProfileSource = Join-Path $PWD &quot;profiles.json&quot;
+$TerminalProfileDestination = Join-Path $TerminalPath &quot;LocalState/profiles.json&quot;;
+if(Test-Path $TerminalProfileDestination) {
+    Remove-Item -Path $TerminalProfileDestination;
+}
+Write-Host &quot;Creating symlink to Windows terminal settings...&quot;
+New-Item -Path $TerminalProfileDestination -ItemType SymbolicLink -Value $TerminalProfileSource | Out-Null;
+</code></pre>
+<p>Place this PowerShell file in the same directory as your <code>profiles.json</code> and
+run it as administrator and you now have a roaming Windows Terminal profile.
+However, there's a downside with this approach. Any changes to the file
+won't be picked up by Windows Terminal automatically, so you will need to
+restart the terminal for it to  reload the configuration.</p>
+<p>I've created a repository for my own configurations which include configuration files
+for PowerShell as well as <a href="https://starship.rs/">Starship</a>, which you can find at
+<a href="https://github.com/patriksvensson/machine">https://github.com/patriksvensson/machine</a>.
+Feel free to fork or copy it if you want a starting point for your own configuration files.</p>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>
