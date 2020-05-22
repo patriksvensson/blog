@@ -6,8 +6,8 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Fri, 22 May 2020 10:31:36 GMT</pubDate>
-		<lastBuildDate>Fri, 22 May 2020 10:31:36 GMT</lastBuildDate>
+		<pubDate>Fri, 22 May 2020 10:45:20 GMT</pubDate>
+		<lastBuildDate>Fri, 22 May 2020 10:45:20 GMT</lastBuildDate>
 		<item>
 			<title>How to create .NET Core release artifacts with GitHub Actions</title>
 			<link>https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions</link>
