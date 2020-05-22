@@ -1,0 +1,11 @@
+{
+    "files.exclude": {
+        ".vscode": true,
+        "bin": true,
+        "LICENSE": true,
+        "obj": true,
+        "output": true,
+        "temp": true,
+        "wwwroot": true
+    }
+}
