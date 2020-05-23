@@ -23,6 +23,10 @@ namespace site.Commands
             [CommandOption("-f|--force")]
             [Description("Overwrites the blog post if it already exist")]
             public bool Force { get; set; }
+
+            [CommandOption("--no-draft")]
+            [Description("Do not create as draft")]
+            public bool NoDraft { get; set; }
         }
 
         public override ValidationResult Validate(CommandContext context, Settings settings)
@@ -67,7 +71,11 @@ namespace site.Commands
             builder.AppendLine($"Title: {settings.Title}");
             builder.AppendLine($"Slug: {slug}");
             builder.AppendLine($"Published: {published.ToString("yyyy-MM-dd")}");
-            builder.AppendLine($"Draft: True");
+
+            if(!settings.NoDraft)
+            {
+                builder.AppendLine($"Draft: True");
+            }
 
             if (settings.Tags?.Length > 0)
             {
