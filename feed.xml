@@ -7,7 +7,7 @@
 	</author>
 	<link rel="self" href="https://patriksvensson.se/" />
 	<rights>2020</rights>
-	<updated>2020-05-22T10:45:20Z</updated>
+	<updated>2020-05-26T09:25:29Z</updated>
 	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
 	<entry>
 		<id>https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions</id>
