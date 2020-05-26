@@ -6,8 +6,107 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Tue, 26 May 2020 09:25:29 GMT</pubDate>
-		<lastBuildDate>Tue, 26 May 2020 09:25:29 GMT</lastBuildDate>
+		<pubDate>Tue, 26 May 2020 13:58:03 GMT</pubDate>
+		<lastBuildDate>Tue, 26 May 2020 13:58:03 GMT</lastBuildDate>
+		<item>
+			<title>Targeting ARM64 for Windows in Rust</title>
+			<link>https://patriksvensson.se/2020/05/targeting-arm-for-windows-in-rust</link>
+			<description>&lt;p&gt;I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
+ARM64 device the other day my initial thought when I got the idea, was
+"I hope it's not complicated to do".&lt;/p&gt;
+&lt;p&gt;TLDR; it wasn't.&lt;/p&gt;</description>
+			<author>Patrik Svensson</author>
+			<guid>https://patriksvensson.se/2020/05/targeting-arm-for-windows-in-rust</guid>
+			<pubDate>Tue, 26 May 2020 00:00:00 GMT</pubDate>
+			<content:encoded>&lt;p&gt;I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
+ARM64 device the other day my initial thought when I got the idea, was
+&amp;quot;I hope it's not complicated to do&amp;quot;.&lt;/p&gt;
+&lt;p&gt;TLDR; it wasn't.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;h2 id="toolchain-targets"&gt;Toolchain targets&lt;/h2&gt;
+&lt;p&gt;One thing to know is that ARM64, or &lt;code&gt;aarch64-pc-windows-msvc&lt;/code&gt; as the toolchain
+target is known as is that it belongs in &lt;code&gt;tier 2&lt;/code&gt; of Rust's platform support.&lt;/p&gt;
+&lt;p&gt;While tier 1 is &amp;quot;&lt;em&gt;Guaranteed to run&lt;/em&gt;&amp;quot;, tier 2 is only &amp;quot;&lt;em&gt;Guaranteed to build&lt;/em&gt;&amp;quot;.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Tier 2 platforms can be thought of as &amp;quot;guaranteed to build&amp;quot;. Automated tests
+are not run, so it's not guaranteed to produce a working build, but platforms often work to quite a good degree [...]&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;So what do the different parts in the toolchain target name mean?&lt;/p&gt;
+&lt;table&gt;
+  &lt;tbody&gt;
+  &lt;tr&gt;
+    &lt;td&gt;&lt;code&gt;arch64&lt;/code&gt;&lt;/td&gt;
+    &lt;td&gt;The platform architecture we're targeting, in this case, ARM64.&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;&lt;code&gt;pc-windows&lt;/code&gt;&lt;/td&gt;
+    &lt;td&gt;The operating system we're targeting, in this case, Windows.&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;&lt;code&gt;msvc&lt;/code&gt;&lt;/td&gt;
+    &lt;td&gt;The compiler we're using. MSVC is an abbreviation of "Microsoft Visual C++".&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;If you're interested in reading more about the different supported platforms
+in Rust, you can find the full list over at&lt;br /&gt;
+&lt;a href="https://forge.rust-lang.org/release/platform-support.html"&gt;https://forge.rust-lang.org/release/platform-support.html&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id="installing-the-toolchain-target"&gt;Installing the toolchain target&lt;/h2&gt;
+&lt;p&gt;Rust supports cross-compilation, so there's no need to build our ARM64 app on an
+ARM64 machine, and even if we wanted to, it would prove difficult since essential
+tools like &lt;a href="https://doc.rust-lang.org/cargo/"&gt;Cargo&lt;/a&gt; isn't available for ARM64 on
+Windows. The only prerequisite for cross-compiling is that you need a compiler
+that can target the platform installed on your machine (in our case Microsoft
+Visual C++) and all the necessary dependencies required to compile our code.&lt;/p&gt;
+&lt;p&gt;To compile our application for ARM64, we need to install the
+&lt;code&gt;aarch64-pc-windows-msvc&lt;/code&gt; target for our Rust compiler toolchain.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; rustup target install aarch64-pc-windows-msvc
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If you want to see what toolchain targets are available or installed, you can
+use the &lt;code&gt;rustup target list&lt;/code&gt; command.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; rustup target list
+aarch64-apple-ios
+aarch64-fuchsia
+aarch64-linux-android
+aarch64-pc-windows-msvc (installed)
+aarch64-unknown-linux-gnu
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="building-for-arm64"&gt;Building for ARM64&lt;/h2&gt;
+&lt;p&gt;Now when the correct toolchain target has been installed, let's go ahead and
+create a new binary and build it with our newly installed target.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; cargo build --target=aarch64-pc-windows-msvc
+   Compiling helloworld v0.1.0 (D:\Source\local\armtest)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.36s
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="automatically-build-with-a-specific-target"&gt;Automatically build with a specific target&lt;/h3&gt;
+&lt;p&gt;If you want to always build for this target, you can create the file
+&lt;code&gt;.cargo/config&lt;/code&gt; in your repository root and add the following contents to it:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-toml"&gt;[build]
+target = &amp;quot;aarch64-pc-windows-msvc&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="running-on-an-arm64-machine"&gt;Running on an ARM64 machine&lt;/h2&gt;
+&lt;p&gt;Everything compiled! Not a big surprise, it's &amp;quot;Guaranteed to build&amp;quot; after all,
+but it felt good anyway.&lt;br /&gt;
+Time to test it out on an actual ARM-64 machine.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; ./armtest.exe
+-1073741515
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="oh-noes"&gt;Oh noes&lt;/h3&gt;
+&lt;p&gt;The application exited with the error code &lt;code&gt;-1073741515&lt;/code&gt;,
+more famously known as &lt;code&gt;0xC0000135&lt;/code&gt;, which is Windows' way of telling us that
+an essential component is missing. It turns out that we need to install the
+&lt;a href="https://aka.ms/vs/16/release/VC_redist.arm64.exe"&gt;&lt;em&gt;Microsoft Visual C++ Redistributable for Visual Studio 2019&lt;/em&gt;&lt;/a&gt;
+for ARM64.&lt;/p&gt;
+&lt;p&gt;Installing that and rerunning it produces the expected output.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; ./armtest.exe
+Hello World
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;Not super complicated stuff, but hopefully this post has been useful for you if you
+wanted to learn more about Rust's different platform tiers, toolchain targets, and cross-compilation.&lt;/p&gt;
+</content:encoded>
+			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
+		</item>
 		<item>
 			<title>How to create .NET Core release artifacts with GitHub Actions</title>
 			<link>https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions</link>
@@ -1529,26 +1628,6 @@ RunTarget(target);
 &lt;h2 id="what-now"&gt;What now?&lt;/h2&gt;
 &lt;p&gt;This was only supposed to be an introduction to Cake but I will blog more about this in the near future.&lt;/p&gt;
 &lt;p&gt;If you find this project interesting and want to help or you just have opinions about stuff, you can check out the full repository at &lt;a href="https://github.com/cake-build/cake"&gt;https://github.com/cake-build/cake&lt;/a&gt;.&lt;/p&gt;
-</content:encoded>
-			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
-		</item>
-		<item>
-			<title>The singleton logger</title>
-			<link>https://patriksvensson.se/2014/06/the-singleton-logger</link>
-			<description>&lt;p&gt;It is widely accepted that you access logging frameworks via a static singleton instance, and most logging frameworks are designed to work like this. But why? Many people often refer to it as being a cross-cross cutting concern; and that it's therefore not important to do things by the book. Not only does most logging frameworks use the static singleton as a façade, but they also store process-wide state.&lt;/p&gt;</description>
-			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2014/06/the-singleton-logger</guid>
-			<pubDate>Wed, 18 Jun 2014 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;It is widely accepted that you access logging frameworks via a static singleton instance, and most logging frameworks are designed to work like this. But why? Many people often refer to it as being a cross-cross cutting concern; and that it's therefore not important to do things by the book. Not only does most logging frameworks use the static singleton as a façade, but they also store process-wide state.&lt;/p&gt;
-&lt;!--excerpt--&gt;
-&lt;p&gt;Cross-cutting concern or not; most developers normally won't argue against the dependency inversion principle, but when it comes to logging it all seem forgotten. One can understand that logging should be simple, but if we went down that path we could justify anything by the same standard.&lt;/p&gt;
-&lt;p&gt;A static singleton is to me (in 99.99% of the cases) a sign that something is wrong; a code smell regardless of the justifications that should be handled with caution.&lt;/p&gt;
-&lt;h2 id="where-am-i-going-with-this"&gt;Where am I going with this?&lt;/h2&gt;
-&lt;p&gt;I've started using the excellent &lt;a href="http://serilog.net/"&gt;Serilog&lt;/a&gt; recently, and I was glad to see that while it provides a static log facade doesn't seem to encourage it for any other reason than to be more easily adoptable by other frameworks. I just visited their &lt;a href="https://github.com/serilog/serilog/wiki/Getting-Started"&gt;GitHub page&lt;/a&gt;, and in the footer you can read:&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;Configuring and using the Log class is an optional convenience that makes it easier for libraries to adopt Serilog. Serilog does not and will never adopt any static/process-wide state within the logging pipeline itself.&amp;quot;&amp;quot;.&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;Sounds like a small step in the right direction.&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>

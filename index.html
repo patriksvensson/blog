@@ -75,6 +75,16 @@
     <div class="row">
         <div class="8u 12u$(medium)">
             <div>
+                <a href="/2020/05/targeting-arm-for-windows-in-rust">
+                    <h2>Targeting ARM64 for Windows in Rust</h2>
+                </a>
+                <p>Posted on Tuesday, May 26, 2020</p>
+                <p>I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
+ARM64 device the other day my initial thought when I got the idea, was
+"I hope it's not complicated to do".</p>
+<p>TLDR; it wasn't.</p>
+            </div>
+            <div>
                 <a href="/2020/03/creating-release-artifacts-with-github-actions">
                     <h2>How to create .NET Core release artifacts with GitHub Actions</h2>
                 </a>
@@ -109,20 +119,6 @@ ahead and enabled the slow ring. The update started, and I went to bed.</p>
                 <p>If you have more than one computer that you use, you might have noticed
 that it requires some work to keep your Windows Terminal profile up to date.</p>
             </div>
-            <div>
-                <a href="/2019/09/how-to-find-a-nuget-package-path-from-msbuild">
-                    <h2>How to find a NuGet package path from MSBuild</h2>
-                </a>
-                <p>Posted on Monday, September 30, 2019</p>
-                <p>Lately I've been porting some projects at a client from .NET Framework to .NET Core,
-and as part  of that I had to convert <code>csproj</code> files from the old project format
-to <a href="1">the new one</a>. That means getting rid of package references in <code>packages.config</code>
-and replacing them with <code>PackageReference</code> elements in the project files.</p>
-<p>When doing this, I noticed that some files that was part of a NuGet package's
-<a href="2">TFM</a> folder wasn't copied to the application's output folder anymore.
-As annoying as breaking changes are I realized that this change was an improvement
-in many ways, but I still needed to find a way to solve the problem.</p>
-            </div>
         </div>
         <div class="4u 12u$(medium)">
 
@@ -136,10 +132,11 @@ in many ways, but I still needed to find a way to solve the problem.</p>
                 <li><a role="button" href="/tags/cake" class="button small ">Cake (3)</a></li>
                 <li><a role="button" href="/tags/debugging" class="button small ">Debugging (2)</a></li>
                 <li><a role="button" href="/tags/github" class="button small ">GitHub (2)</a></li>
-                <li><a role="button" href="/tags/rust" class="button small ">Rust (1)</a></li>
+                <li><a role="button" href="/tags/rust" class="button small ">Rust (2)</a></li>
                 <li><a role="button" href="/tags/windows-10" class="button small ">Windows 10 (2)</a></li>
                 <li><a role="button" href="/tags/wpf" class="button small ">WPF (2)</a></li>
                 <li><a role="button" href="/tags/appveyor" class="button small ">AppVeyor (1)</a></li>
+                <li><a role="button" href="/tags/arm64" class="button small ">ARM64 (1)</a></li>
             </ul>
             <ul class="actions small">
                 <li><a href="/tags" class="button small">View All Tags &rarr;</a></li>
@@ -147,6 +144,7 @@ in many ways, but I still needed to find a way to solve the problem.</p>
 
             <h5>Older Posts</h5>
             <ul>
+                <li><a href="/2019/09/how-to-find-a-nuget-package-path-from-msbuild">How to find a NuGet package path from MSBuild</a></li>
                 <li><a href="/2019/06/debugging-an-uwp-store-app-with-windbg">Debugging an UWP store app with WinDbg</a></li>
                 <li><a href="/2019/03/build-counters-in-azure-devops">Using build counters in Azure DevOps</a></li>
                 <li><a href="/2018/10/generating-api-clients-using-autorest">Generating API clients using AutoRest</a></li>
