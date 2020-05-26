@@ -9,7 +9,7 @@ Tags:
 ---
 
 I wanted to run a thing I'm building with Rust on my Surface Pro X which is an 
-ARM64 device the other day my initial thought when I got the idea, was 
+ARM64 device the other day. My initial thought when I got the idea, was 
 "I hope it's not complicated to do".
 
 TLDR; it wasn't.
@@ -18,8 +18,8 @@ TLDR; it wasn't.
 
 ## Toolchain targets
 
-One thing to know is that ARM64, or `aarch64-pc-windows-msvc` as the toolchain
-target is known as is that it belongs in `tier 2` of Rust's platform support.
+One thing to be aware of is that ARM64, or `aarch64-pc-windows-msvc` as the toolchain
+target is known as, is that it belongs in `tier 2` of Rust's platform support.
 
 While tier 1 is "_Guaranteed to run_", tier 2 is only "_Guaranteed to build_".
 
@@ -28,20 +28,19 @@ are not run, so it's not guaranteed to produce a working build, but platforms of
 
 So what do the different parts in the toolchain target name mean?
 
-
 <table>
   <tbody>
   <tr>
-    <td><code>arch64</code></td>
-    <td>The platform architecture we're targeting, in this case, ARM64.</td>
+    <td><code>aarch64</code></td>
+    <td>This is the platform architecture we're targeting, in this case, ARM64.</td>
   </tr>
   <tr>
     <td><code>pc-windows</code></td>
-    <td>The operating system we're targeting, in this case, Windows.</td>
+    <td>This is the operating system we're targeting, in this case, Windows.</td>
   </tr>
   <tr>
     <td><code>msvc</code></td>
-    <td>The compiler we're using. MSVC is an abbreviation of "Microsoft Visual C++".</td>
+    <td>This is the compiler we want to use. MSVC is an abbreviation of "Microsoft Visual C++".</td>
   </tr>
   </tbody>
 </table>
@@ -55,9 +54,9 @@ https://forge.rust-lang.org/release/platform-support.html.
 Rust supports cross-compilation, so there's no need to build our ARM64 app on an 
 ARM64 machine, and even if we wanted to, it would prove difficult since essential 
 tools like [Cargo](https://doc.rust-lang.org/cargo/) isn't available for ARM64 on 
-Windows. The only prerequisite for cross-compiling is that you need a compiler 
-that can target the platform installed on your machine (in our case Microsoft 
-Visual C++) and all the necessary dependencies required to compile our code.
+Windows. The only prerequisite for cross-compiling is a compiler 
+that can target the desired platform and all the necessary dependencies 
+required to compile the code.
 
 To compile our application for ARM64, we need to install the 
 `aarch64-pc-windows-msvc` target for our Rust compiler toolchain.
@@ -85,14 +84,14 @@ create a new binary and build it with our newly installed target.
 
 ```text
 > cargo build --target=aarch64-pc-windows-msvc
-   Compiling helloworld v0.1.0 (D:\Source\local\armtest)
+   Compiling helloworld v0.1.0 (D:\Source\local\helloworld)
     Finished dev [unoptimized + debuginfo] target(s) in 0.36s
 ```
 
 ### Automatically build with a specific target
 
-If you want to always build for this target, you can create the file 
-`.cargo/config` in your repository root and add the following contents to it:
+If you always want to build for this target, you can create`.cargo/config` 
+in your repository root and add the following contents to it:
 
 ```toml
 [build]
@@ -102,11 +101,10 @@ target = "aarch64-pc-windows-msvc"
 ## Running on an ARM64 machine
 
 Everything compiled! Not a big surprise, it's "Guaranteed to build" after all,
-but it felt good anyway.  
-Time to test it out on an actual ARM-64 machine.
+but it felt good anyway. Time to test it out on an actual ARM64 machine.
 
 ```text
-> ./armtest.exe
+> ./helloworld.exe
 -1073741515
 ```
 
@@ -118,10 +116,11 @@ an essential component is missing. It turns out that we need to install the
 [_Microsoft Visual C++ Redistributable for Visual Studio 2019_](https://aka.ms/vs/16/release/VC_redist.arm64.exe)
 for ARM64.
 
-Installing that and rerunning it produces the expected output.
+Installing the MSVC redistributable and rerunning our app 
+now produces the expected output.
 
 ```text
-> ./armtest.exe
+> ./helloworld.exe
 Hello World
 ```
 
