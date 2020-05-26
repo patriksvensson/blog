@@ -83,13 +83,13 @@
 
 <div id="content">
     <p>I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
-ARM64 device the other day my initial thought when I got the idea, was
+ARM64 device the other day. My initial thought when I got the idea, was
 &quot;I hope it's not complicated to do&quot;.</p>
 <p>TLDR; it wasn't.</p>
 <!--excerpt-->
 <h2 id="toolchain-targets">Toolchain targets</h2>
-<p>One thing to know is that ARM64, or <code>aarch64-pc-windows-msvc</code> as the toolchain
-target is known as is that it belongs in <code>tier 2</code> of Rust's platform support.</p>
+<p>One thing to be aware of is that ARM64, or <code>aarch64-pc-windows-msvc</code> as the toolchain
+target is known as, is that it belongs in <code>tier 2</code> of Rust's platform support.</p>
 <p>While tier 1 is &quot;<em>Guaranteed to run</em>&quot;, tier 2 is only &quot;<em>Guaranteed to build</em>&quot;.</p>
 <blockquote>
 <p>Tier 2 platforms can be thought of as &quot;guaranteed to build&quot;. Automated tests
@@ -99,16 +99,16 @@ are not run, so it's not guaranteed to produce a working build, but platforms of
 <table>
   <tbody>
   <tr>
-    <td><code>arch64</code></td>
-    <td>The platform architecture we're targeting, in this case, ARM64.</td>
+    <td><code>aarch64</code></td>
+    <td>This is the platform architecture we're targeting, in this case, ARM64.</td>
   </tr>
   <tr>
     <td><code>pc-windows</code></td>
-    <td>The operating system we're targeting, in this case, Windows.</td>
+    <td>This is the operating system we're targeting, in this case, Windows.</td>
   </tr>
   <tr>
     <td><code>msvc</code></td>
-    <td>The compiler we're using. MSVC is an abbreviation of "Microsoft Visual C++".</td>
+    <td>This is the compiler we want to use. MSVC is an abbreviation of "Microsoft Visual C++".</td>
   </tr>
   </tbody>
 </table>
@@ -119,9 +119,9 @@ in Rust, you can find the full list over at<br />
 <p>Rust supports cross-compilation, so there's no need to build our ARM64 app on an
 ARM64 machine, and even if we wanted to, it would prove difficult since essential
 tools like <a href="https://doc.rust-lang.org/cargo/">Cargo</a> isn't available for ARM64 on
-Windows. The only prerequisite for cross-compiling is that you need a compiler
-that can target the platform installed on your machine (in our case Microsoft
-Visual C++) and all the necessary dependencies required to compile our code.</p>
+Windows. The only prerequisite for cross-compiling is a compiler
+that can target the desired platform and all the necessary dependencies
+required to compile the code.</p>
 <p>To compile our application for ARM64, we need to install the
 <code>aarch64-pc-windows-msvc</code> target for our Rust compiler toolchain.</p>
 <pre><code class="language-text">&gt; rustup target install aarch64-pc-windows-msvc
@@ -139,20 +139,19 @@ aarch64-unknown-linux-gnu
 <p>Now when the correct toolchain target has been installed, let's go ahead and
 create a new binary and build it with our newly installed target.</p>
 <pre><code class="language-text">&gt; cargo build --target=aarch64-pc-windows-msvc
-   Compiling helloworld v0.1.0 (D:\Source\local\armtest)
+   Compiling helloworld v0.1.0 (D:\Source\local\helloworld)
     Finished dev [unoptimized + debuginfo] target(s) in 0.36s
 </code></pre>
 <h3 id="automatically-build-with-a-specific-target">Automatically build with a specific target</h3>
-<p>If you want to always build for this target, you can create the file
-<code>.cargo/config</code> in your repository root and add the following contents to it:</p>
+<p>If you always want to build for this target, you can create<code>.cargo/config</code>
+in your repository root and add the following contents to it:</p>
 <pre><code class="language-toml">[build]
 target = &quot;aarch64-pc-windows-msvc&quot;
 </code></pre>
 <h2 id="running-on-an-arm64-machine">Running on an ARM64 machine</h2>
 <p>Everything compiled! Not a big surprise, it's &quot;Guaranteed to build&quot; after all,
-but it felt good anyway.<br />
-Time to test it out on an actual ARM-64 machine.</p>
-<pre><code class="language-text">&gt; ./armtest.exe
+but it felt good anyway. Time to test it out on an actual ARM64 machine.</p>
+<pre><code class="language-text">&gt; ./helloworld.exe
 -1073741515
 </code></pre>
 <h3 id="oh-noes">Oh noes</h3>
@@ -161,8 +160,9 @@ more famously known as <code>0xC0000135</code>, which is Windows' way of telling
 an essential component is missing. It turns out that we need to install the
 <a href="https://aka.ms/vs/16/release/VC_redist.arm64.exe"><em>Microsoft Visual C++ Redistributable for Visual Studio 2019</em></a>
 for ARM64.</p>
-<p>Installing that and rerunning it produces the expected output.</p>
-<pre><code class="language-text">&gt; ./armtest.exe
+<p>Installing the MSVC redistributable and rerunning our app
+now produces the expected output.</p>
+<pre><code class="language-text">&gt; ./helloworld.exe
 Hello World
 </code></pre>
 <h2 id="wrapping-up">Wrapping up</h2>
