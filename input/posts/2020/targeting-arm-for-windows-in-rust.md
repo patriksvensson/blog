@@ -2,7 +2,6 @@
 Title: Targeting ARM64 for Windows in Rust
 Slug: targeting-arm-for-windows-in-rust
 Published: 2020-05-26
-Draft: True
 Tags:
 - Rust
 - ARM64
