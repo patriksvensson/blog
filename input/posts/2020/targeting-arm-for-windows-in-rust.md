@@ -17,7 +17,7 @@ TLDR; it wasn't.
 
 <!--excerpt-->
 
-# Toolchain targets
+## Toolchain targets
 
 One thing to know is that ARM64, or `aarch64-pc-windows-msvc` as the toolchain
 target is known as is that it belongs in `tier 2` of Rust's platform support.
@@ -51,7 +51,7 @@ If you're interested in reading more about the different supported platforms
 in Rust, you can find the full list over at  
 https://forge.rust-lang.org/release/platform-support.html.
 
-# Installing the toolchain target
+## Installing the toolchain target
 
 Rust supports cross-compilation, so there's no need to build our ARM64 app on an 
 ARM64 machine, and even if we wanted to, it would prove difficult since essential 
@@ -79,7 +79,7 @@ aarch64-pc-windows-msvc (installed)
 aarch64-unknown-linux-gnu
 ```
 
-# Building for ARM64
+## Building for ARM64
 
 Now when the correct toolchain target has been installed, let's go ahead and 
 create a new binary and build it with our newly installed target.
@@ -100,7 +100,7 @@ If you want to always build for this target, you can create the file
 target = "aarch64-pc-windows-msvc"
 ```
 
-# Running on an ARM64 machine
+## Running on an ARM64 machine
 
 Everything compiled! Not a big surprise, it's "Guaranteed to build" after all,
 but it felt good anyway.  
@@ -126,7 +126,7 @@ Installing that and rerunning it produces the expected output.
 Hello World
 ```
 
-# Wrapping up
+## Wrapping up
 
 Not super complicated stuff, but hopefully this post has been useful for you if you
 wanted to learn more about Rust's different platform tiers, toolchain targets, and cross-compilation.
