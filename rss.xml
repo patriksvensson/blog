@@ -6,8 +6,8 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Tue, 26 May 2020 15:04:44 GMT</pubDate>
-		<lastBuildDate>Tue, 26 May 2020 15:04:44 GMT</lastBuildDate>
+		<pubDate>Wed, 27 May 2020 08:07:27 GMT</pubDate>
+		<lastBuildDate>Wed, 27 May 2020 08:07:27 GMT</lastBuildDate>
 		<item>
 			<title>Targeting ARM64 for Windows in Rust</title>
 			<link>https://patriksvensson.se/2020/05/targeting-arm-for-windows-in-rust</link>
