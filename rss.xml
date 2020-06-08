@@ -6,8 +6,8 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Mon, 08 Jun 2020 08:58:52 GMT</pubDate>
-		<lastBuildDate>Mon, 08 Jun 2020 08:58:52 GMT</lastBuildDate>
+		<pubDate>Mon, 08 Jun 2020 10:00:08 GMT</pubDate>
+		<lastBuildDate>Mon, 08 Jun 2020 10:00:08 GMT</lastBuildDate>
 		<item>
 			<title>Enumerating monitors in Rust using Win32 API</title>
 			<link>https://patriksvensson.se/2020/06/enumerating-monitors-in-rust-using-win32-api</link>
