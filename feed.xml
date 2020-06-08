@@ -7,8 +7,123 @@
 	</author>
 	<link rel="self" href="https://patriksvensson.se/" />
 	<rights>2020</rights>
-	<updated>2020-05-27T08:07:27Z</updated>
+	<updated>2020-06-08T08:58:52Z</updated>
 	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
+	<entry>
+		<id>https://patriksvensson.se/2020/06/enumerating-monitors-in-rust-using-win32-api</id>
+		<title>Enumerating monitors in Rust using Win32 API</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2020/06/enumerating-monitors-in-rust-using-win32-api" />
+		<updated>2020-06-08T00:00:00Z</updated>
+		<content>&lt;p&gt;I had to enumerate all monitors yesterday using the
+&lt;a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors"&gt;EnumDisplayMonitors&lt;/a&gt;
+Win32 function, and I thought I would write a couple of lines about what I did since I couldn't find any useful
+information about how to do this.&lt;/p&gt;
+&lt;h2 id="import-the-winapi-crate"&gt;Import the winapi crate&lt;/h2&gt;
+&lt;p&gt;First, we need to import the &lt;a href="https://docs.rs/winapi/0.3.8/winapi/index.html"&gt;winapi crate&lt;/a&gt;.
+We could of course define all Win32 &lt;a href="https://doc.rust-lang.org/nomicon/ffi.html"&gt;FFI&lt;/a&gt; calls ourselves,
+but this saves us a lot of keystrokes and make our lives easier.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-toml"&gt;[dependencies]
+winapi = { version = &amp;quot;0.3.6&amp;quot;, features = [&amp;quot;winuser&amp;quot;] }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="enumerating-the-monitors"&gt;Enumerating the monitors&lt;/h2&gt;
+&lt;p&gt;With the winapi crate in place, we can start writing the code. I won't go into details about it,
+but it should show a couple of things.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;How to use unsafe code&lt;/li&gt;
+&lt;li&gt;How to define a callback from an FFI function&lt;/li&gt;
+&lt;li&gt;How to convert &lt;a href="https://docs.rs/winapi/0.3.8/winapi/um/winnt/type.WCHAR.html"&gt;WCHAR&lt;/a&gt;
+(a &lt;a href="https://doc.rust-lang.org/std/u16/index.html"&gt;u16&lt;/a&gt; type alias)
+to &lt;a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html"&gt;OsString&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;How to convert from &lt;a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html"&gt;OsString&lt;/a&gt;
+to &lt;a href="https://doc.rust-lang.org/std/primitive.str.html"&gt;&amp;amp;str&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;How to cast to &lt;code&gt;*mut _&lt;/code&gt; (a type placeholder) when we want Rust to figure out the type.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre&gt;&lt;code class="language-rust"&gt;use std::mem;
+use std::os::windows::ffi::OsStringExt;
+
+pub use winapi::shared::minwindef::{LPARAM, TRUE, BOOL};
+pub use winapi::shared::windef::{HMONITOR, HDC, LPRECT, RECT};
+pub use winapi::um::winuser::{EnumDisplayMonitors, GetMonitorInfoW, MONITORINFOEXW};
+
+fn main() {
+    for monitor in enumerate_monitors() {
+        // Convert the WCHAR[] to a unicode OsString
+        let name = match &amp;amp;monitor.szDevice[..].iter().position(|c| *c == 0) {
+            Some(len) =&amp;gt; std::ffi::OsString::from_wide(&amp;amp;monitor.szDevice[0..*len]),
+            None =&amp;gt; std::ffi::OsString::from_wide(&amp;amp;monitor.szDevice[0..monitor.szDevice.len()]),
+        };
+
+        // Print some information to the console
+        println!(&amp;quot;Display name = {}&amp;quot;, name.to_str().unwrap());
+        println!(&amp;quot;    Left: {}&amp;quot;, monitor.rcWork.left);
+        println!(&amp;quot;   Right: {}&amp;quot;, monitor.rcWork.right);
+        println!(&amp;quot;     Top: {}&amp;quot;, monitor.rcWork.top);
+        println!(&amp;quot;  Bottom: {}&amp;quot;, monitor.rcWork.bottom);
+    }
+}
+
+///////////////////////////////////////////////////////////////
+// The method that numerates all monitors
+
+pub fn enumerate_monitors() -&amp;gt; Vec&amp;lt;MONITORINFOEXW&amp;gt; {
+    // Define the vector where we will store the result
+    let mut monitors = Vec::&amp;lt;MONITORINFOEXW&amp;gt;::new();
+    let userdata = &amp;amp;mut monitors as *mut _;
+
+    let result = unsafe {
+        EnumDisplayMonitors(
+            std::ptr::null_mut(),
+            std::ptr::null(),
+            Some(enumerate_monitors_callback),
+            userdata as LPARAM,
+        )
+    };
+
+    if result != TRUE {
+        // Get the last error for the current thread.
+        // This is analogous to calling the Win32 API GetLastError.
+        panic!(&amp;quot;Could not enumerate monitors: {}&amp;quot;, std::io::Error::last_os_error());
+    }
+
+    monitors
+}
+
+///////////////////////////////////////////////////////////////
+// The callback from EnumDisplayMonitors
+
+unsafe extern &amp;quot;system&amp;quot; fn enumerate_monitors_callback(
+    monitor: HMONITOR,
+    _: HDC,
+    _: LPRECT,
+    userdata: LPARAM,
+) -&amp;gt; BOOL {
+    // Get the userdata where we will store the result
+    let monitors: &amp;amp;mut Vec&amp;lt;MONITORINFOEXW&amp;gt; = mem::transmute(userdata);
+
+    // Initialize the MONITORINFOEXW structure and get a pointer to it
+    let mut monitor_info: MONITORINFOEXW = mem::zeroed();
+    monitor_info.cbSize = mem::size_of::&amp;lt;MONITORINFOEXW&amp;gt;() as u32;
+    let monitor_info_ptr = &amp;lt;*mut _&amp;gt;::cast(&amp;amp;mut monitor_info);
+
+    // Call the GetMonitorInfoW win32 API
+    let result = GetMonitorInfoW(monitor, monitor_info_ptr);
+    if result == TRUE {
+        // Push the information we received to userdata
+        monitors.push(monitor_info);
+    }
+
+    TRUE
+}
+&lt;/code&gt;&lt;/pre&gt;
+</content>
+		<summary>&lt;p&gt;I had to enumerate all monitors yesterday using the
+&lt;a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors"&gt;EnumDisplayMonitors&lt;/a&gt;
+Win32 function, and I thought I would write a couple of lines about what I did since I couldn't find any useful
+information about how to do this.&lt;/p&gt;</summary>
+	</entry>
 	<entry>
 		<id>https://patriksvensson.se/2020/05/targeting-arm-for-windows-in-rust</id>
 		<title>Targeting ARM64 for Windows in Rust</title>
@@ -120,8 +235,8 @@ ARM64 device the other day. My initial thought when I got the idea, was
 		<content>&lt;p&gt;In this blog post, we'll create a &lt;a href="https://github.com/features/actions"&gt;GitHub Action&lt;/a&gt; that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.&lt;/p&gt;
 &lt;!--excerpt--&gt;
 &lt;p&gt;There's a myriad of ways of doing this, but this has so far worked out great for me.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/gh_assets.png" alt="A GitHub release with artifacts" /&gt;&lt;/p&gt;
-&lt;p&gt;For this blog post, I've created a .NET Core 3.1 console application whose only purpose is to write &amp;quot;Hello World&amp;quot; to the console. It's this application we build and package when we create a new GitHub release, and the source code can be found at &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src"&gt;https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/gh_assets.png" alt="A GitHub release with artifacts"&gt;&lt;/p&gt;
+&lt;p&gt;For this blog post, I've created a .NET Core 3.1 console application whose only purpose is to write "Hello World" to the console. It's this application we build and package when we create a new GitHub release, and the source code can be found at &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src"&gt;https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src&lt;/a&gt;&lt;/p&gt;
 &lt;h2 id="create-the-github-action"&gt;1. Create the GitHub Action&lt;/h2&gt;
 &lt;p&gt;We start by creating a new &lt;a href="https://help.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#creating-a-workflow-file"&gt;workflow file&lt;/a&gt; under &lt;code&gt;.github/workflows&lt;/code&gt; in the repository. We call this &lt;code&gt;ci.yaml&lt;/code&gt;, but you can name this anything you want as long as it's a YAML file. We then proceed to tell GitHub that we want this workflow to run every time we publish a new release.&lt;/p&gt;
 &lt;pre&gt;&lt;code class="language-yaml"&gt;name: Publish
@@ -151,7 +266,7 @@ on:
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Notice that we reference the &lt;code&gt;os&lt;/code&gt; matrix metadata in the &lt;code&gt;runs-on&lt;/code&gt; node via &lt;code&gt;{{ matrix.os }}&lt;/code&gt;. You can reference any data defined in the matrix this way.&lt;/p&gt;
 &lt;p&gt;As you can see in the image below, the name of each step in the matrix will be a combination of the job name and the name of the matrix element.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/gh_job.png" alt="A GitHub Actions job" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/gh_job.png" alt="A GitHub Actions job"&gt;&lt;/p&gt;
 &lt;h2 id="build-package-and-publish"&gt;3. Build, package and publish&lt;/h2&gt;
 &lt;p&gt;Now when we've defined the workflow and the build matrix, we'll have to do four things.&lt;/p&gt;
 &lt;ol&gt;
@@ -163,10 +278,10 @@ on:
 &lt;p&gt;Let's start with the first two since there are already pre-made actions for these.&lt;/p&gt;
 &lt;pre&gt;&lt;code class="language-yaml"&gt;    steps:
       - name: Checkout
-        uses: actions/checkout&amp;#64;v1
+        uses: actions/checkout@v1
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet&amp;#64;v1
+        uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.101
 &lt;/code&gt;&lt;/pre&gt;
@@ -176,27 +291,27 @@ on:
         run: |
           # Define some variables for things we need
           tag=$(git describe --tags --abbrev=0)
-          release_name=&amp;quot;App-$tag-${{ matrix.target }}&amp;quot;
+          release_name="App-$tag-${{ matrix.target }}"
 
           # Build everything
-          dotnet publish src/App/App.csproj --framework netcoreapp3.1 --runtime &amp;quot;${{ matrix.target }}&amp;quot; -c Release -o &amp;quot;$release_name&amp;quot;
+          dotnet publish src/App/App.csproj --framework netcoreapp3.1 --runtime "${{ matrix.target }}" -c Release -o "$release_name"
 
           # Pack files
-          if [ &amp;quot;${{ matrix.target }}&amp;quot; == &amp;quot;win-x64&amp;quot; ]; then
-            7z a -tzip &amp;quot;${release_name}.zip&amp;quot; &amp;quot;./${release_name}/*&amp;quot;
+          if [ "${{ matrix.target }}" == "win-x64" ]; then
+            7z a -tzip "${release_name}.zip" "./${release_name}/*"
           else
-            tar czvf &amp;quot;${release_name}.tar.gz&amp;quot; &amp;quot;$release_name&amp;quot;
+            tar czvf "${release_name}.tar.gz" "$release_name"
           fi
 
           # Delete output directory
-          rm -r &amp;quot;$release_name&amp;quot;
+          rm -r "$release_name"
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;You might have noticed that we run the build step in a Bash shell and wonder how that works on Windows (at least I did). The answer is that it runs under Git Bash and not under Windows Subsystem for Linux (WSL), as one might have thought.&lt;/p&gt;
 &lt;p&gt;Finally, once we've built and packaged everything up, we'll add the artifacts to our release. For this, we'll use &lt;a href="https://github.com/softprops/action-gh-release"&gt;softprops/action-gh-release&lt;/a&gt; GitHub Action, which I think works very well.&lt;/p&gt;
 &lt;pre&gt;&lt;code class="language-yaml"&gt;      - name: Publish
-        uses: softprops/action-gh-release&amp;#64;v1
+        uses: softprops/action-gh-release@v1
         with:
-          files: &amp;quot;App*&amp;quot;
+          files: "App*"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 &lt;/code&gt;&lt;/pre&gt;
@@ -447,7 +562,7 @@ named &lt;code&gt;WSL 2&lt;/code&gt;). WSL 2 requires that the computer enrolls 
 since the computer I was on didn't receive any insider builds at all, I went
 ahead and enabled the slow ring. The update started, and I went to bed.&lt;/p&gt;
 &lt;p&gt;When I woke up the next morning, I saw this:&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/fubar.jpg" alt="computer can't find MBR" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/fubar.jpg" alt="computer can't find MBR"&gt;&lt;/p&gt;
 &lt;p&gt;I tried restoring the master boot record using a recovery disk, but I couldn't
 get this to work for some unknown reason.&lt;/p&gt;
 &lt;p&gt;Luckily (😅), my computer crashed for almost the same reason a couple of months
@@ -455,7 +570,7 @@ ago, so I had started to prepare some scripts to help me set up a new computer
 using &lt;a href="https://chocolatey.org/"&gt;Chocolatey&lt;/a&gt; and
 &lt;a href="https://boxstarter.org/"&gt;Boxstarter&lt;/a&gt;. The scripts were far from perfect but
 worked well enough to get my computer up and running in less than 30 minutes.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/boxstarter.jpg" alt="Boxstarter" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/boxstarter.jpg" alt="Boxstarter"&gt;&lt;/p&gt;
 &lt;p&gt;After the installation, I started making some adjustments to the script and
 wanted to try it all out. Since I want the setup part to be as smooth as
 possible, I was contemplating whether to do another reinstall of Windows and
@@ -471,7 +586,7 @@ destructive operation.&lt;/p&gt;
 &lt;h2 id="installing-windows-sandbox"&gt;Installing Windows Sandbox&lt;/h2&gt;
 &lt;p&gt;Installing Windows Sandbox is as simple as running the following command from a
 PowerShell console:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-powershell"&gt;PS&amp;gt; Enable-WindowsOptionalFeature -FeatureName &amp;quot;Containers-DisposableClientVM&amp;quot; -All -Online
+&lt;pre&gt;&lt;code class="language-powershell"&gt;PS&amp;gt; Enable-WindowsOptionalFeature -FeatureName "Containers-DisposableClientVM" -All -Online
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Restart your computer for the change to take effect. Once the
 computer rebooted, search for &lt;code&gt;Sandbox&lt;/code&gt; in the start menu to start it. The
@@ -512,14 +627,14 @@ click it, and a new Sandbox environment gets created for you.&lt;/p&gt;
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;So by simply double-clicking on the configuration file, A new sandboxed
 environment gets created, and my installation script starts.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/windows-sandbox.png" alt="Windows Sandbox" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/windows-sandbox.png" alt="Windows Sandbox"&gt;&lt;/p&gt;
 &lt;h2 id="detect-if-youre-running-in-the-sandbox"&gt;Detect if you're running in the sandbox&lt;/h2&gt;
 &lt;p&gt;There are some things you don't want to do in a sandboxed environment. Perhaps
 it's not permitted, such as installing the Windows Sandbox, or you don't
 want to run some part of your script.&lt;/p&gt;
 &lt;p&gt;Detecting whether or not you're in a sandboxed environment is reasonably
 straightforward; check if the current username is &lt;code&gt;WDAGUtilityAccount&lt;/code&gt;.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-powershell"&gt;if($env:UserName -ne &amp;quot;WDAGUtilityAccount&amp;quot;) {
+&lt;pre&gt;&lt;code class="language-powershell"&gt;if($env:UserName -ne "WDAGUtilityAccount") {
     # Do things that can't be done in Windows Sandbox.
 }
 &lt;/code&gt;&lt;/pre&gt;
@@ -598,14 +713,14 @@ that it requires some work to keep your Windows Terminal profile up to date.&lt;
 		<updated>2019-09-30T00:00:00Z</updated>
 		<content>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
 and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
-to &lt;a href="1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
+to &lt;a href="https://patriksvensson.se/1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
 and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
 &lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
-&lt;a href="2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
+&lt;a href="https://patriksvensson.se/2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
 As annoying as breaking changes are I realized that this change was an improvement
 in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;
 &lt;!--excerpt--&gt;
-&lt;p&gt;There was a &lt;a href="3"&gt;feature added&lt;/a&gt; in the NuGet client library that was shipped with
+&lt;p&gt;There was a &lt;a href="https://patriksvensson.se/3"&gt;feature added&lt;/a&gt; in the NuGet client library that was shipped with
 Visual Studio 15.9.9 that introduced a new attribute to the &lt;code&gt;PackageReference&lt;/code&gt;
 element called &lt;code&gt;GeneratePathProperty&lt;/code&gt;. What this attribute does is that it creates
 a new MSBuild property that is set to the package's root path on disk.&lt;/p&gt;
@@ -614,28 +729,28 @@ MSBuild target, that after building my project would copy the file to the output
 directory.&lt;/p&gt;
 &lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;!-- Specify what packages we're dependent on --&amp;gt;
 &amp;lt;ItemGroup&amp;gt;
-    &amp;lt;PackageReference Include=&amp;quot;Foo.Bar&amp;quot; 
-                      Version=&amp;quot;1.2.3&amp;quot; 
-                      GeneratePathProperty=&amp;quot;true&amp;quot; /&amp;gt;
+    &amp;lt;PackageReference Include="Foo.Bar" 
+                      Version="1.2.3" 
+                      GeneratePathProperty="true" /&amp;gt;
 &amp;lt;/ItemGroup&amp;gt;
 
 &amp;lt;!-- Copy the files to the output directory --&amp;gt;
-&amp;lt;Target Name=&amp;quot;CopyFooBarFiles&amp;quot; AfterTargets=&amp;quot;Build&amp;quot;&amp;gt;
-    &amp;lt;Copy Condition=&amp;quot;'$(TargetFramework)' == 'net462'&amp;quot; 
-          SourceFiles=&amp;quot;$(PkgFoo_Bar)\lib\net40\qux.dat&amp;quot; 
-          DestinationFolder=&amp;quot;$(OutDir)&amp;quot; /&amp;gt;
+&amp;lt;Target Name="CopyFooBarFiles" AfterTargets="Build"&amp;gt;
+    &amp;lt;Copy Condition="'$(TargetFramework)' == 'net462'" 
+          SourceFiles="$(PkgFoo_Bar)\lib\net40\qux.dat" 
+          DestinationFolder="$(OutDir)" /&amp;gt;
 &amp;lt;/Target&amp;gt;
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;So by setting &lt;code&gt;GeneratePathProperty=&amp;quot;true&amp;quot;&lt;/code&gt; for the &lt;code&gt;Foo.Bar&lt;/code&gt; reference above, an
+&lt;p&gt;So by setting &lt;code&gt;GeneratePathProperty="true"&lt;/code&gt; for the &lt;code&gt;Foo.Bar&lt;/code&gt; reference above, an
 MSBuild property named &lt;code&gt;PkgFoo_Bar&lt;/code&gt; automatically gets created set to the path to
 the package on disk.&lt;/p&gt;
 </content>
 		<summary>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
 and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
-to &lt;a href="1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
+to &lt;a href="https://patriksvensson.se/1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
 and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
 &lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
-&lt;a href="2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
+&lt;a href="https://patriksvensson.se/2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
 As annoying as breaking changes are I realized that this change was an improvement
 in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;</summary>
 	</entry>
@@ -941,22 +1056,22 @@ executes something) separately from the settings (the options, flags and argumen
 which I want to be able to inherit from each other.&lt;/p&gt;
 &lt;pre&gt;&lt;code class="language-csharp"&gt;public class AddSettings : CommandSettings
 {
-    [CommandArgument(0, &amp;quot;[PROJECT]&amp;quot;)]
+    [CommandArgument(0, "[PROJECT]")]
     public string Project { get; set; }
 }
 
 public class AddPackageSettings : AddSettings
 {
-    [CommandArgument(0, &amp;quot;&amp;lt;PACKAGE_NAME&amp;gt;&amp;quot;)]
+    [CommandArgument(0, "&amp;lt;PACKAGE_NAME&amp;gt;")]
     public string PackageName { get; set; }
 
-    [CommandOption(&amp;quot;-v|--version &amp;lt;VERSION&amp;gt;&amp;quot;)]
+    [CommandOption("-v|--version &amp;lt;VERSION&amp;gt;")]
     public string Version { get; set; }
 }
 
 public class AddReferenceSettings : AddSettings
 {
-    [CommandArgument(0, &amp;quot;&amp;lt;PROJECT_REFERENCE&amp;gt;&amp;quot;)]
+    [CommandArgument(0, "&amp;lt;PROJECT_REFERENCE&amp;gt;")]
     public string ProjectReference { get; set; }
 }
 &lt;/code&gt;&lt;/pre&gt;
@@ -990,10 +1105,10 @@ namespace MyApp
 
             app.Configure(config =&amp;gt;
             {
-                config.AddBranch&amp;lt;AddSettings&amp;gt;(&amp;quot;add&amp;quot;, add =&amp;gt;
+                config.AddBranch&amp;lt;AddSettings&amp;gt;("add", add =&amp;gt;
                 {
-                    add.AddCommand&amp;lt;AddPackageCommand&amp;gt;(&amp;quot;package&amp;quot;);
-                    add.AddCommand&amp;lt;AddReferenceCommand&amp;gt;(&amp;quot;reference&amp;quot;);
+                    add.AddCommand&amp;lt;AddPackageCommand&amp;gt;("package");
+                    add.AddCommand&amp;lt;AddReferenceCommand&amp;gt;("reference");
                 });
             });
 
@@ -1013,8 +1128,8 @@ experiment and makes the CLI experience a first class citizen of your applicatio
 &lt;h2 id="errors"&gt;Errors&lt;/h2&gt;
 &lt;p&gt;I've also put some time in making the help screens and errors more intuitive than most other
 command line parsing frameworks.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/command_help.png" alt="Help" /&gt;&lt;br /&gt;
-&lt;img src="/images/command_error.png" alt="Error" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/command_help.png" alt="Help"&gt;&lt;br&gt;
+&lt;img src="https://patriksvensson.se/images/command_error.png" alt="Error"&gt;&lt;/p&gt;
 &lt;h2 id="what-else"&gt;What else?&lt;/h2&gt;
 &lt;p&gt;This article was meant as an introduction to Spectre.Cli, but the framework itself contains a
 lot of other things as well such as dependency injection, validation and async/await support.
@@ -1039,13 +1154,13 @@ composition of them.&lt;/p&gt;</summary>
 		<updated>2018-02-01T00:00:00Z</updated>
 		<content>&lt;p&gt;I recently wanted to debug a Rust program on Windows that I had written, and was struggling with how to get it to work. Since there was quite a lot of hoops to jump through to get it to work, I though I should share it with other people as well. I've written this blog post from memory and I'm far from an expert in LLVM or Rust, so if you see something strange here then let me know.&lt;/p&gt;
 &lt;p&gt;The drawback of this approach is that you can't debug applications built using the MSVC toolchain. If you know how to do this, please tell me. I would really appreciate it.&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;UPDATE 2018-02-02:&lt;/strong&gt;&lt;br /&gt;
+&lt;p&gt;&lt;strong&gt;UPDATE 2018-02-02:&lt;/strong&gt;&lt;br&gt;
 As &lt;a href="https://twitter.com/studoot/status/959093798692380672"&gt;Stuart Dootson pointed out to me&lt;/a&gt;, there's a guide on how to debug applications using the MSVC toolchain &lt;a href="http://www.brycevandyk.com/debug-rust-on-windows-with-visual-studio-code-and-the-msvc-debugger/"&gt;here&lt;/a&gt;. I haven't tried this out myself, but it looks promising. Thanks Stuart!&lt;/p&gt;
 &lt;h3 id="install-llvm"&gt;1. Install LLVM&lt;/h3&gt;
 &lt;p&gt;First we need to install LLVM which is a compiler infrastructure. Part of LLVM is LLDB which is the debugger we're going to use. The latest version of LLVM doesn't include Python support for LLDB which is required for the VSCode extension, so we need to download a custom built version and install that.&lt;/p&gt;
 &lt;p&gt;&lt;a href="https://github.com/vadimcn/llvm/releases"&gt;https://github.com/vadimcn/llvm/releases&lt;/a&gt;&lt;/p&gt;
 &lt;h3 id="install-python"&gt;2. Install Python&lt;/h3&gt;
-&lt;p&gt;We now need to install Python v3.5 (Not v3.6).&lt;br /&gt;
+&lt;p&gt;We now need to install Python v3.5 (Not v3.6).&lt;br&gt;
 &lt;a href="https://www.python.org/downloads/release/python-354/"&gt;https://www.python.org/downloads/release/python-354/&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;If you installed the x64 version of LLVM, make sure that you install the x64 version of Python as well, otherwise you will encounter problems later on.&lt;/p&gt;
 &lt;h3 id="make-sure-it-works"&gt;3. Make sure it works&lt;/h3&gt;
@@ -1056,7 +1171,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Write &lt;code&gt;exit()&lt;/code&gt; to close the Python interpreter and then &lt;code&gt;CTRL+C&lt;/code&gt; to break out of LLDB.&lt;/p&gt;
 &lt;h3 id="install-the-vscode-extension"&gt;4. Install the VSCode extension&lt;/h3&gt;
-&lt;p&gt;We now need to install the &lt;code&gt;vscode-lldb&lt;/code&gt; extension for Visual Studio Code. This is what makes it possible to debug our Rust code from Visual Studio Code.&lt;br /&gt;
+&lt;p&gt;We now need to install the &lt;code&gt;vscode-lldb&lt;/code&gt; extension for Visual Studio Code. This is what makes it possible to debug our Rust code from Visual Studio Code.&lt;br&gt;
 &lt;a href="https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb"&gt;https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb&lt;/a&gt;&lt;/p&gt;
 &lt;h3 id="install-the-rust-gnu-toolchain"&gt;5. Install the Rust GNU toolchain&lt;/h3&gt;
 &lt;p&gt;Since LLDB doesn't work with the msvc compiler, we need to install the Rust GNU toolschain and use that one. This have some drawbacks though such as we won't be able to intop with software produced by Visual Studio.&lt;/p&gt;
@@ -1096,22 +1211,22 @@ rustc 1.23.0 (766bd11c8 2018-01-01)
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    &amp;quot;version&amp;quot;: &amp;quot;0.2.0&amp;quot;,
-    &amp;quot;configurations&amp;quot;: [
+    "version": "0.2.0",
+    "configurations": [
         {
-            &amp;quot;type&amp;quot;: &amp;quot;lldb&amp;quot;,
-            &amp;quot;request&amp;quot;: &amp;quot;launch&amp;quot;,
-            &amp;quot;name&amp;quot;: &amp;quot;Debug&amp;quot;,
-            &amp;quot;program&amp;quot;: &amp;quot;${workspaceRoot}/target/debug/hello_world&amp;quot;,
-            &amp;quot;args&amp;quot;: [],
-            &amp;quot;cwd&amp;quot;: &amp;quot;${workspaceRoot}/target/debug/&amp;quot;
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug",
+            "program": "${workspaceRoot}/target/debug/hello_world",
+            "args": [],
+            "cwd": "${workspaceRoot}/target/debug/"
         }
     ]
 }
 &lt;/code&gt;&lt;/pre&gt;
 &lt;h3 id="profit"&gt;9. Profit&lt;/h3&gt;
 &lt;p&gt;Press F5 again. You should now be debugging your code.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/rust-debugging.png" alt="Debugging Rust" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/rust-debugging.png" alt="Debugging Rust"&gt;&lt;/p&gt;
 </content>
 		<summary>&lt;p&gt;I recently wanted to debug a Rust program on Windows that I had written, and was struggling with how to get it to work. Since there was quite a lot of hoops to jump through to get it to work, I though I should share it with other people as well. I've written this blog post from memory and I'm far from an expert in LLVM or Rust, so if you see something strange here then let me know.&lt;/p&gt;</summary>
 	</entry>
@@ -1446,19 +1561,19 @@ to take a closer look via the PowerShell debug console.&lt;/p&gt;</summary>
 &lt;h2 id="create-the-build-script"&gt;1. Create the build script&lt;/h2&gt;
 &lt;p&gt;Add a build script called &lt;code&gt;build.cake&lt;/code&gt; to the project root. In this tutorial, we'll just create a really simple build script for demonstration.&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;// Get the target.
-var target = Argument&amp;lt;string&amp;gt;(&amp;quot;target&amp;quot;, &amp;quot;Default&amp;quot;);
+var target = Argument&amp;lt;string&amp;gt;("target", "Default");
 
-Task(&amp;quot;Default&amp;quot;)
+Task("Default")
   .Does(() =&amp;gt;
 {
-	Information(&amp;quot;Hello from Cake!&amp;quot;);
+	Information("Hello from Cake!");
 });
 
 RunTarget(target);
 &lt;/code&gt;&lt;/pre&gt;
 &lt;h2 id="create-a-bootstrapper-script"&gt;2. Create a bootstrapper script&lt;/h2&gt;
 &lt;p&gt;Create a old fashioned batch file called &lt;code&gt;build.cmd&lt;/code&gt; that will download Cake and execute the build script.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;&amp;#64;echo off
+&lt;pre&gt;&lt;code&gt;@echo off
 
 :Build
 cls
@@ -1488,10 +1603,10 @@ tools\Cake\Cake.exe build.cake -target=Default -verbosity=diagnostic
 &lt;/ul&gt;
 &lt;h2 id="tell-appveyor-what-to-do"&gt;4. Tell AppVeyor what to do&lt;/h2&gt;
 &lt;p&gt;Now we need to tell AppVeyor how to start the Cake build. Do this by setting the build script for your AppVeyor project to &lt;code&gt;build.cmd&lt;/code&gt;. Save your settings and you should be done.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/cake-appveyor-build-settings.png" alt="AppVeyor Build Settings" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/cake-appveyor-build-settings.png" alt="AppVeyor Build Settings"&gt;&lt;/p&gt;
 &lt;h2 id="profit"&gt;5. Profit&lt;/h2&gt;
 &lt;p&gt;The next triggered build will now execute the Cake build script as expected.&lt;/p&gt;
-&lt;p&gt;&lt;img src="/images/cake-appveyor-profit.png" alt="AppVeyor Build" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/cake-appveyor-profit.png" alt="AppVeyor Build"&gt;&lt;/p&gt;
 &lt;p&gt;For more information about Cake, see &lt;a href="http://cake.readthedocs.org"&gt;http://cake.readthedocs.org&lt;/a&gt;.&lt;/p&gt;
 </content>
 		<summary>&lt;p&gt;In this blog post I will show you how to use &lt;a href="https://github.com/cake-build/cake"&gt;Cake&lt;/a&gt; with your AppVeyor CI builds.&lt;/p&gt;</summary>
@@ -1550,106 +1665,5 @@ If you create a cool extension, tell me about it and I will link to it from the 
 </content>
 		<summary>&lt;p&gt;Cake supports something called script aliases. Script aliases are convenience methods that are easily accessible directly from a Cake script. Every &lt;a href="http://cake.readthedocs.org/en/latest/api-documentation.html"&gt;API method&lt;/a&gt; in Cake is implemented like this.&lt;/p&gt;
 &lt;p&gt;In this blog post I will show how to extend Cake with your own script aliases. It's really simple, I promise. ;-)&lt;/p&gt;</summary>
-	</entry>
-	<entry>
-		<id>https://patriksvensson.se/2014/07/its-not-a-party-without-cake</id>
-		<title>It's not a party without Cake</title>
-		<author>
-			<name>Patrik Svensson</name>
-		</author>
-		<link href="https://patriksvensson.se/2014/07/its-not-a-party-without-cake" />
-		<updated>2014-07-18T00:00:00Z</updated>
-		<content>&lt;p&gt;I have during my nine years as a (professional) programmer used several different build automation systems such as &lt;a href="https://github.com/ruby/rake"&gt;Rake&lt;/a&gt;, &lt;a href="https://github.com/psake/psake"&gt;psake&lt;/a&gt;, &lt;a href="http://www.cmake.org/"&gt;CMake&lt;/a&gt;, &lt;a href="http://msdn.microsoft.com/en-us/library/ms181709.aspx"&gt;TFS Build&lt;/a&gt; and &lt;a href="http://fsharp.github.io/FAKE/"&gt;FAKE&lt;/a&gt;, but none of these have allowed me to write my build scripts using C# - the language I use the most.&lt;/p&gt;
-&lt;p&gt;About two months ago I decided to change that and now it's time to formally introduce Cake, which is short for C# Make.&lt;/p&gt;
-&lt;!--excerpt--&gt;
-&lt;p&gt;&lt;img src="/images/cake-medium.png" alt="Build Status" /&gt;&lt;/p&gt;
-&lt;h2 id="what-is-cake"&gt;What is Cake?&lt;/h2&gt;
-&lt;p&gt;Cake is (like you probably already figured out) a build automation system with a C# DSL to do things like compiling code, copy files/folders, running unit tests, compress files and build NuGet packages.&lt;/p&gt;
-&lt;p&gt;Cake uses a &lt;a href="http://martinfowler.com/articles/rake.html#DependencyBasedProgramming"&gt;dependency based programming model&lt;/a&gt; just like Rake, FAKE and similar build automation systems where you declare &lt;em&gt;tasks&lt;/em&gt; and the dependencies between those. When you execute a task, Cake will construct a directed acyclic graph containing all tasks and execute these in the correct order.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Task(&amp;quot;A&amp;quot;)
-    .Does(() =&amp;gt;
-{
-});
-
-Task(&amp;quot;B&amp;quot;)
-    .IsDependentOn(&amp;quot;A&amp;quot;);
-    .Does(() =&amp;gt;
-{
-});
-
-RunTarget(&amp;quot;B&amp;quot;);
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;The goal of Cake is to be a first class alternative to those who - like me - want to write their build scripts in C# instead of Ruby, F# or Powershell.&lt;/p&gt;
-&lt;h2 id="what-does-a-cake-script-look-like"&gt;What does a Cake script look like?&lt;/h2&gt;
-&lt;p&gt;Assume our build script have four steps where we want to:&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;Clean up old artifacts.&lt;/li&gt;
-&lt;li&gt;Build the code.&lt;/li&gt;
-&lt;li&gt;Run unit tests.&lt;/li&gt;
-&lt;li&gt;Package generated artifacts.&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;A build script like that could look something like this.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;var target = Argument&amp;lt;string&amp;gt;(&amp;quot;target&amp;quot;, &amp;quot;Package&amp;quot;);
-var config = Argument&amp;lt;string&amp;gt;(&amp;quot;config&amp;quot;, &amp;quot;Release&amp;quot;);
-
-Task(&amp;quot;Clean&amp;quot;)
-    .Does(() =&amp;gt;
-{
-    // Clean directories.
-    CleanDirectory(&amp;quot;./output&amp;quot;);
-    CleanDirectory(&amp;quot;./output/bin&amp;quot;);
-    CleanDirectories(&amp;quot;./src/**/bin/&amp;quot; + config);
-});
-
-Task(&amp;quot;Build&amp;quot;)
-    .IsDependentOn(&amp;quot;Clean&amp;quot;)
-    .Does(() =&amp;gt;
-{
-    // Build the solution using MSBuild.
-    MSBuild(&amp;quot;./src/Project.sln&amp;quot;, settings =&amp;gt; 
-        settings.SetConfiguration(config));     
-});
-
-Task(&amp;quot;RunUnitTests&amp;quot;)
-    .IsDependentOn(&amp;quot;Build&amp;quot;)
-    .Does(() =&amp;gt;
-{
-    // Run xUnit tests.
-    XUnit(&amp;quot;./src/**/bin/&amp;quot; + config + &amp;quot;/*.Tests.dll&amp;quot;);
-});
-
-Task(&amp;quot;CopyFiles&amp;quot;)
-    .IsDependentOn(&amp;quot;RunUnitTests&amp;quot;)
-    .Does(() =&amp;gt;
-{
-    var path = &amp;quot;./src/Project/bin/&amp;quot; + configuration;    
-    var files = GetFiles(path + &amp;quot;/**/*.dll&amp;quot;) 
-        + GetFiles(path + &amp;quot;/**/*.exe&amp;quot;);
-
-    // Copy all exe and dll files to the output directory.
-    CopyFiles(files, &amp;quot;./output/bin&amp;quot;);
-});    
-
-Task(&amp;quot;Package&amp;quot;)
-    .IsDependentOn(&amp;quot;RunUnitTests&amp;quot;)
-    .Does(() =&amp;gt;
-{
-    // Zip all files in the bin directory.
-    Zip(&amp;quot;./output/bin&amp;quot;, &amp;quot;./output/build.zip&amp;quot;);
-});
-
-RunTarget(target);
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;To run our build script we invoke &lt;code&gt;Cake.exe&lt;/code&gt; with the script file as the first argument, and (optionally) the name of our target task as the second argument. We can also tell Cake how much information we're interested in with the built in &lt;code&gt;verbosity&lt;/code&gt; parameter, which is very useful when debugging a script.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;C:&amp;gt; Cake.exe build.cake -target=Package -verbosity=diagnostic
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;This is just an example. Much more functionality is already implemented such as support for &lt;code&gt;MSBuild&lt;/code&gt;, &lt;code&gt;MSTest&lt;/code&gt;, &lt;code&gt;xUnit&lt;/code&gt;, &lt;code&gt;NUnit&lt;/code&gt;, &lt;code&gt;ILMerge&lt;/code&gt;, &lt;code&gt;NuGet pack/restore&lt;/code&gt; and the most common file system operations such as &lt;code&gt;file/folder manipulation&lt;/code&gt; and &lt;code&gt;globbing&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;To see an actual build script in action, fork or clone the &lt;a href="https://github.com/cake-build/cake"&gt;GitHub repository&lt;/a&gt; and run &lt;code&gt;build.cmd&lt;/code&gt; which will download Cake from NuGet and run the &lt;code&gt;build.cake&lt;/code&gt; script.&lt;/p&gt;
-&lt;h2 id="what-now"&gt;What now?&lt;/h2&gt;
-&lt;p&gt;This was only supposed to be an introduction to Cake but I will blog more about this in the near future.&lt;/p&gt;
-&lt;p&gt;If you find this project interesting and want to help or you just have opinions about stuff, you can check out the full repository at &lt;a href="https://github.com/cake-build/cake"&gt;https://github.com/cake-build/cake&lt;/a&gt;.&lt;/p&gt;
-</content>
-		<summary>&lt;p&gt;I have during my nine years as a (professional) programmer used several different build automation systems such as &lt;a href="https://github.com/ruby/rake"&gt;Rake&lt;/a&gt;, &lt;a href="https://github.com/psake/psake"&gt;psake&lt;/a&gt;, &lt;a href="http://www.cmake.org/"&gt;CMake&lt;/a&gt;, &lt;a href="http://msdn.microsoft.com/en-us/library/ms181709.aspx"&gt;TFS Build&lt;/a&gt; and &lt;a href="http://fsharp.github.io/FAKE/"&gt;FAKE&lt;/a&gt;, but none of these have allowed me to write my build scripts using C# - the language I use the most.&lt;/p&gt;
-&lt;p&gt;About two months ago I decided to change that and now it's time to formally introduce Cake, which is short for C# Make.&lt;/p&gt;</summary>
 	</entry>
 </feed>
