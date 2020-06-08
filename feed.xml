@@ -7,7 +7,7 @@
 	</author>
 	<link rel="self" href="https://patriksvensson.se/" />
 	<rights>2020</rights>
-	<updated>2020-06-08T10:00:08Z</updated>
+	<updated>2020-06-08T11:26:19Z</updated>
 	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
 	<entry>
 		<id>https://patriksvensson.se/2020/06/enumerating-monitors-in-rust-using-win32-api</id>
@@ -41,19 +41,22 @@ to &lt;a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html"&gt;OsStri
 to &lt;a href="https://doc.rust-lang.org/std/primitive.str.html"&gt;&amp;amp;str&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;How to cast to &lt;code&gt;*mut _&lt;/code&gt; (a type placeholder) when we want Rust to figure out the type.&lt;/li&gt;
 &lt;/ol&gt;
-&lt;pre&gt;&lt;code class="language-rust"&gt;use std::mem;
+&lt;pre&gt;&lt;code class="language-rust"&gt;use std::ffi::OsString;
+use std::io::Error;
+use std::mem;
+use std::ptr;
 use std::os::windows::ffi::OsStringExt;
 
-pub use winapi::shared::minwindef::{LPARAM, TRUE, BOOL};
-pub use winapi::shared::windef::{HMONITOR, HDC, LPRECT, RECT};
-pub use winapi::um::winuser::{EnumDisplayMonitors, GetMonitorInfoW, MONITORINFOEXW};
+use winapi::shared::minwindef::{LPARAM, TRUE, BOOL};
+use winapi::shared::windef::{HMONITOR, HDC, LPRECT, RECT};
+use winapi::um::winuser::{EnumDisplayMonitors, GetMonitorInfoW, MONITORINFOEXW};
 
 fn main() {
     for monitor in enumerate_monitors() {
         // Convert the WCHAR[] to a unicode OsString
         let name = match &amp;amp;monitor.szDevice[..].iter().position(|c| *c == 0) {
-            Some(len) =&amp;gt; std::ffi::OsString::from_wide(&amp;amp;monitor.szDevice[0..*len]),
-            None =&amp;gt; std::ffi::OsString::from_wide(&amp;amp;monitor.szDevice[0..monitor.szDevice.len()]),
+            Some(len) =&amp;gt; OsString::from_wide(&amp;amp;monitor.szDevice[0..*len]),
+            None =&amp;gt; OsString::from_wide(&amp;amp;monitor.szDevice[0..monitor.szDevice.len()]),
         };
 
         // Print some information to the console
@@ -68,15 +71,15 @@ fn main() {
 ///////////////////////////////////////////////////////////////
 // The method that numerates all monitors
 
-pub fn enumerate_monitors() -&amp;gt; Vec&amp;lt;MONITORINFOEXW&amp;gt; {
+fn enumerate_monitors() -&amp;gt; Vec&amp;lt;MONITORINFOEXW&amp;gt; {
     // Define the vector where we will store the result
     let mut monitors = Vec::&amp;lt;MONITORINFOEXW&amp;gt;::new();
     let userdata = &amp;amp;mut monitors as *mut _;
 
     let result = unsafe {
         EnumDisplayMonitors(
-            std::ptr::null_mut(),
-            std::ptr::null(),
+            ptr::null_mut(),
+            ptr::null(),
             Some(enumerate_monitors_callback),
             userdata as LPARAM,
         )
@@ -85,7 +88,7 @@ pub fn enumerate_monitors() -&amp;gt; Vec&amp;lt;MONITORINFOEXW&amp;gt; {
     if result != TRUE {
         // Get the last error for the current thread.
         // This is analogous to calling the Win32 API GetLastError.
-        panic!(&amp;quot;Could not enumerate monitors: {}&amp;quot;, std::io::Error::last_os_error());
+        panic!(&amp;quot;Could not enumerate monitors: {}&amp;quot;, Error::last_os_error());
     }
 
     monitors
