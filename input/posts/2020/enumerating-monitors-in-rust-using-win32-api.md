@@ -38,19 +38,22 @@ but it should show a couple of things.
 5. How to cast to `*mut _` (a type placeholder) when we want Rust to figure out the type.
 
 ```rust
+use std::ffi::OsString;
+use std::io::Error;
 use std::mem;
+use std::ptr;
 use std::os::windows::ffi::OsStringExt;
 
-pub use winapi::shared::minwindef::{LPARAM, TRUE, BOOL};
-pub use winapi::shared::windef::{HMONITOR, HDC, LPRECT, RECT};
-pub use winapi::um::winuser::{EnumDisplayMonitors, GetMonitorInfoW, MONITORINFOEXW};
+use winapi::shared::minwindef::{LPARAM, TRUE, BOOL};
+use winapi::shared::windef::{HMONITOR, HDC, LPRECT, RECT};
+use winapi::um::winuser::{EnumDisplayMonitors, GetMonitorInfoW, MONITORINFOEXW};
 
 fn main() {
     for monitor in enumerate_monitors() {
         // Convert the WCHAR[] to a unicode OsString
         let name = match &monitor.szDevice[..].iter().position(|c| *c == 0) {
-            Some(len) => std::ffi::OsString::from_wide(&monitor.szDevice[0..*len]),
-            None => std::ffi::OsString::from_wide(&monitor.szDevice[0..monitor.szDevice.len()]),
+            Some(len) => OsString::from_wide(&monitor.szDevice[0..*len]),
+            None => OsString::from_wide(&monitor.szDevice[0..monitor.szDevice.len()]),
         };
 
         // Print some information to the console
@@ -65,15 +68,15 @@ fn main() {
 ///////////////////////////////////////////////////////////////
 // The method that numerates all monitors
 
-pub fn enumerate_monitors() -> Vec<MONITORINFOEXW> {
+fn enumerate_monitors() -> Vec<MONITORINFOEXW> {
     // Define the vector where we will store the result
     let mut monitors = Vec::<MONITORINFOEXW>::new();
     let userdata = &mut monitors as *mut _;
 
     let result = unsafe {
         EnumDisplayMonitors(
-            std::ptr::null_mut(),
-            std::ptr::null(),
+            ptr::null_mut(),
+            ptr::null(),
             Some(enumerate_monitors_callback),
             userdata as LPARAM,
         )
@@ -82,7 +85,7 @@ pub fn enumerate_monitors() -> Vec<MONITORINFOEXW> {
     if result != TRUE {
         // Get the last error for the current thread.
         // This is analogous to calling the Win32 API GetLastError.
-        panic!("Could not enumerate monitors: {}", std::io::Error::last_os_error());
+        panic!("Could not enumerate monitors: {}", Error::last_os_error());
     }
 
     monitors
