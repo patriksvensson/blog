@@ -20,7 +20,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Statiq.Web" Version="1.0.0-alpha.19" />
+    <PackageReference Include="Statiq.Web" Version="1.0.0-alpha.20" />
   </ItemGroup>
 
 </Project>
