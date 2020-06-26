@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<!--
+    Phantom by HTML5 UP
+    html5up.net | @ajlkn
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="en">
+
+<head>
+
+    <title>Patrik Svensson - Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/default.min.css">
+    <!--[if lte IE 8]><script src="/assets/js/ie/html5shiv.js"></script><![endif]-->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+    <!--[if lte IE 8]><link rel="stylesheet" href="/assets/css/ie8.css" /><![endif]-->
+    <link href="/assets/css/override.css" rel="stylesheet" />
+
+    <meta name="description" content="This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects." />
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss" />
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom" />
+    <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+    <meta name="application-name" content="Patrik Svensson" />
+    <meta name="msapplication-tooltip" content="Patrik Svensson" />
+    <meta name="msapplication-starturl" content="/" />
+
+    <meta property="og:title" content="Patrik Svensson - Deploying to NuGet from GitHub Actions using Cake and MinVer" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver" />
+    <!-- TODO: More social graph meta tags -->
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/highlight.min.js"></script>
+</head>
+
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Header -->
+        <header id="header">
+            <div class="inner">
+
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="title">Patrik Svensson</span>
+                </a>
+
+            </div>
+        </header>
+
+        <!-- Menu -->
+        <nav id="menu">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="/posts">Archive</a></li>
+                <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div id="main">
+            <div class="inner">
+
+                <header>
+    <h1>Deploying to NuGet from GitHub Actions using Cake and MinVer</h1>
+    <p><em>Published on Monday, June 22, 2020</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/net" class="button small ">.NET</a></li>
+        <li><a role="button" href="/tags/cake" class="button small ">Cake</a></li>
+        <li><a role="button" href="/tags/github" class="button small ">GitHub</a></li>
+        <li><a role="button" href="/tags/github-actions" class="button small ">GitHub Actions</a></li>
+        <li><a role="button" href="/tags/minver" class="button small ">MinVer</a></li>
+    </ul>
+</header>
+
+<div id="content">
+    <p>I recently started moving some builds from TeamCity, Travis, and AppVeyor to GitHub actions,
+and while doing that, I thought I would also move to a more straightforward deployment process.</p>
+<p>Before, I used to push to NuGet by tagging the main branch, and while this is a perfectly reasonable
+approach, I wanted to change this to publish previews to NuGet on every push to the main branch.
+If it's a tagged commit on the main branch, a non-preview version should be published.</p>
+<p>To calculate the version number from Git history, I'll use
+<a href="https://github.com/adamralph/minver">MinVer</a> by Adam Ralph.<br />
+I've been a long-time user of <a href="https://github.com/GitTools/GitVersion">GitVersion</a>,
+which always worked well for me, but I wanted to try out something else for this.</p>
+<h2 id="install-prerequisites">Install prerequisites</h2>
+<p>Before gettings started, let's add Cake and MinVer as local tools in the repository.</p>
+<pre><code>&gt; dotnet add tool-manifest
+&gt; dotnet tool install cake.tool
+&gt; dotnet tool install minver-cli
+&gt; dotnet tool restore
+</code></pre>
+<p>There should now be a new directory in your repository root called <code>.config</code> which contains
+the .NET tool manifest <code>dotnet-tools.json</code>. By restoring the tools in the repository root,
+we can run them without installing anything globally on our computer. Make sure that this
+folder is not excluded in your <em>.gitignore</em> file.</p>
+<pre><code># Restore tools
+&gt; dotnet tool restore
+
+# Run cake
+&gt; dotnet cake
+
+# Run minver
+&gt; dotnet minver
+</code></pre>
+<h2 id="the-github-actions-yaml">The GitHub Actions YAML</h2>
+<p>Now let us create our GitHub Actions YAML file that describes how to bootstrap
+our build process.</p>
+<pre><code class="language-yaml">name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    if: &quot;!contains(github.event.head_commit.message, 'skip-ci')&quot;
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout&#64;v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet&#64;v1
+        with:
+          dotnet-version: 3.1.200
+
+      - name: Build
+        shell: bash
+        env:
+            NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+            DOTNET_CLI_TELEMETRY_OPTOUT: true
+        run: |
+          # Restore .NET tools
+          dotnet tool restore
+
+          # Get the version number
+          VERSION=$(dotnet minver -t v -v e -d preview)
+
+          # Run the build script
+          dotnet cake --target=&quot;Publish&quot; --buildversion=&quot;$VERSION&quot; 
+</code></pre>
+<p>Nothing super complicated going on there. On every commit to <em>main</em>,
+unless the commit message contains the text <code>skip-ci</code>, we do the following
+in bash on an Ubuntu image:</p>
+<ol>
+<li>Check out the code.</li>
+<li>Install the .NET Core SDK</li>
+<li>Restore the .NET tools</li>
+<li>Get the version number from <em>MinVer</em> and store it in a variable</li>
+<li>Pass the version number to the <em>Cake</em> build script as an argument and run
+the <em>Publish</em> target.</li>
+</ol>
+<h2 id="the-build-script">The build script</h2>
+<p>Our build script which we save as <code>build.cake</code> in the repository root
+looks like something like this:</p>
+<pre><code class="language-csharp">#tool &quot;nuget:?package=NuGet.CommandLine&amp;version=5.5.1&quot;
+
+// Get the version argument and if none is provided, use 0.0.1.
+// This is just for demonstrational purposes, you probably want to
+// abort if publishing without providing a version number.
+var semanticVersion = Argument(&quot;buildversion&quot;, &quot;0.0.1&quot;);
+var version = semanticVersion.Split(new char[] { '-' }).FirstOrDefault() ?? semanticVersion;
+
+Task(&quot;Clean&quot;)
+    .Does(context =&gt; 
+{
+    CleanDirectory(&quot;./.artifacts&quot;);
+});
+
+Task(&quot;Build&quot;)
+    .IsDependentOn(&quot;Clean&quot;)
+    .Does(context =&gt; 
+{
+    DotNetCoreBuild(&quot;./src/MyProject.sln&quot;, new DotNetCoreBuildSettings {
+        Configuration = &quot;Release&quot;,
+        NoIncremental = true,
+        MSBuildSettings = new DotNetCoreMSBuildSettings()
+            .WithProperty(&quot;Version&quot;, version)
+            .WithProperty(&quot;AssemblyVersion&quot;, version)
+            .WithProperty(&quot;FileVersion&quot;, version)
+    });
+});
+
+Task(&quot;Publish&quot;)
+    .IsDependentOn(&quot;Build&quot;)
+    .Does(context =&gt; 
+{
+    // Make sure that there is an API key.
+    var apiKey =  context.EnvironmentVariable(&quot;NUGET_API_KEY&quot;);
+    if (string.IsNullOrWhiteSpace(apiKey)) {
+        throw new CakeException(&quot;No NuGet API key specified.&quot;);
+    }
+
+    // Pack all projects
+    context.DotNetCorePack($&quot;./src/MyProject.sln&quot;, new DotNetCorePackSettings {
+        Configuration = &quot;Release&quot;,
+        OutputDirectory = &quot;./.artifacts&quot;,
+        NoBuild = true,
+        MSBuildSettings = new DotNetCoreMSBuildSettings()
+            .WithProperty(&quot;PackageVersion&quot;, semanticVersion)
+    });
+
+    // Publish all projects
+    foreach(var file in GetFiles(&quot;./.artifacts/*.nupkg&quot;))
+    {
+        context.Information(&quot;Publishing {0}...&quot;, file.Path.GetFilename().FullPath);
+        context.NuGetPush(file, new NuGetPushSettings {
+            ApiKey = apiKey,
+            Source = &quot;https://api.nuget.org/v3/index.json&quot;
+        });
+    }
+});
+
+RunTarget(Argument(&quot;target&quot;, &quot;Build&quot;))
+</code></pre>
+<p>You would probably want to do a lot of other stuff there as well such
+as running tests and separating packing from publishing so you can get
+the packages without doing an actual publish, but this is just for
+demonstrational purposes. You could also call <em>MinVer</em> directly
+from your <em>Cake</em> script, or use it
+<a href="https://github.com/adamralph/minver#usage">in other ways</a>, but I
+like this approach since it's simple, easy to understand and keeps the
+build script easy to understand.</p>
+<p>Why not do everything in the GitHub Action, you might think? Well,
+I like to decouple my builds from the build server I'm using,
+making it possible to run the same build on my machine.</p>
+<h1 id="summary">Summary</h1>
+<p>In this blog post, I've described how to install local .NET tools whose
+definitions we store in the repository, creating GitHub YAML build definitions
+that is used to bootstrap our build process, and how to write and run a
+Cake build script which does the heavy lifting.</p>
+
+</div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <section>
+                    <h2>Feeds</h2>
+                    <ul class="actions small vertical">
+                        <li><a href="/rss.xml" class="button small"><i class="fa fa-rss"></i> RSS Feed</a></li>
+                        <li><a href="/feed.xml" class="button small"><i class="fa fa-rss"></i> Atom Feed</a></li>
+                    </ul>
+                </section>
+                <section>
+                </section>
+                <ul class="copyright">
+                    <li>Copyright © 2020 Patrik Svensson</li>
+                    <li>Blog forked from <a href="https://github.com/mholo65/mholo65">Martin Björkström</a></li>
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                    <li><a href="https://statiq.dev/">Generated by Statiq</a></li>
+                </ul>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53005417-1', 'auto');
+    ga('send', 'pageview');
+</script>
+    <!-- Scripts -->
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/skel.min.js"></script>
+    <script src="/assets/js/util.js"></script>
+    <!--[if lte IE 8]><script src="/assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="/assets/js/main.js"></script>
+
+</body>
+
+</html>

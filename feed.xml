@@ -7,8 +7,180 @@
 	</author>
 	<link rel="self" href="https://patriksvensson.se/" />
 	<rights>2020</rights>
-	<updated>2020-06-08T11:26:19Z</updated>
+	<updated>2020-06-26T22:15:20Z</updated>
 	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
+	<entry>
+		<id>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</id>
+		<title>Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver" />
+		<updated>2020-06-22T00:00:00Z</updated>
+		<content>&lt;p&gt;I recently started moving some builds from TeamCity, Travis, and AppVeyor to GitHub actions,
+and while doing that, I thought I would also move to a more straightforward deployment process.&lt;/p&gt;
+&lt;p&gt;Before, I used to push to NuGet by tagging the main branch, and while this is a perfectly reasonable
+approach, I wanted to change this to publish previews to NuGet on every push to the main branch.
+If it's a tagged commit on the main branch, a non-preview version should be published.&lt;/p&gt;
+&lt;p&gt;To calculate the version number from Git history, I'll use
+&lt;a href="https://github.com/adamralph/minver"&gt;MinVer&lt;/a&gt; by Adam Ralph.&lt;br /&gt;
+I've been a long-time user of &lt;a href="https://github.com/GitTools/GitVersion"&gt;GitVersion&lt;/a&gt;,
+which always worked well for me, but I wanted to try out something else for this.&lt;/p&gt;
+&lt;h2 id="install-prerequisites"&gt;Install prerequisites&lt;/h2&gt;
+&lt;p&gt;Before gettings started, let's add Cake and MinVer as local tools in the repository.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; dotnet add tool-manifest
+&amp;gt; dotnet tool install cake.tool
+&amp;gt; dotnet tool install minver-cli
+&amp;gt; dotnet tool restore
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;There should now be a new directory in your repository root called &lt;code&gt;.config&lt;/code&gt; which contains
+the .NET tool manifest &lt;code&gt;dotnet-tools.json&lt;/code&gt;. By restoring the tools in the repository root,
+we can run them without installing anything globally on our computer. Make sure that this
+folder is not excluded in your &lt;em&gt;.gitignore&lt;/em&gt; file.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;# Restore tools
+&amp;gt; dotnet tool restore
+
+# Run cake
+&amp;gt; dotnet cake
+
+# Run minver
+&amp;gt; dotnet minver
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="the-github-actions-yaml"&gt;The GitHub Actions YAML&lt;/h2&gt;
+&lt;p&gt;Now let us create our GitHub Actions YAML file that describes how to bootstrap
+our build process.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    if: &amp;quot;!contains(github.event.head_commit.message, 'skip-ci')&amp;quot;
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout&amp;#64;v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet&amp;#64;v1
+        with:
+          dotnet-version: 3.1.200
+
+      - name: Build
+        shell: bash
+        env:
+            NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+            DOTNET_CLI_TELEMETRY_OPTOUT: true
+        run: |
+          # Restore .NET tools
+          dotnet tool restore
+
+          # Get the version number
+          VERSION=$(dotnet minver -t v -v e -d preview)
+
+          # Run the build script
+          dotnet cake --target=&amp;quot;Publish&amp;quot; --buildversion=&amp;quot;$VERSION&amp;quot; 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Nothing super complicated going on there. On every commit to &lt;em&gt;main&lt;/em&gt;,
+unless the commit message contains the text &lt;code&gt;skip-ci&lt;/code&gt;, we do the following
+in bash on an Ubuntu image:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Check out the code.&lt;/li&gt;
+&lt;li&gt;Install the .NET Core SDK&lt;/li&gt;
+&lt;li&gt;Restore the .NET tools&lt;/li&gt;
+&lt;li&gt;Get the version number from &lt;em&gt;MinVer&lt;/em&gt; and store it in a variable&lt;/li&gt;
+&lt;li&gt;Pass the version number to the &lt;em&gt;Cake&lt;/em&gt; build script as an argument and run
+the &lt;em&gt;Publish&lt;/em&gt; target.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="the-build-script"&gt;The build script&lt;/h2&gt;
+&lt;p&gt;Our build script which we save as &lt;code&gt;build.cake&lt;/code&gt; in the repository root
+looks like something like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;#tool &amp;quot;nuget:?package=NuGet.CommandLine&amp;amp;version=5.5.1&amp;quot;
+
+// Get the version argument and if none is provided, use 0.0.1.
+// This is just for demonstrational purposes, you probably want to
+// abort if publishing without providing a version number.
+var semanticVersion = Argument(&amp;quot;buildversion&amp;quot;, &amp;quot;0.0.1&amp;quot;);
+var version = semanticVersion.Split(new char[] { '-' }).FirstOrDefault() ?? semanticVersion;
+
+Task(&amp;quot;Clean&amp;quot;)
+    .Does(context =&amp;gt; 
+{
+    CleanDirectory(&amp;quot;./.artifacts&amp;quot;);
+});
+
+Task(&amp;quot;Build&amp;quot;)
+    .IsDependentOn(&amp;quot;Clean&amp;quot;)
+    .Does(context =&amp;gt; 
+{
+    DotNetCoreBuild(&amp;quot;./src/MyProject.sln&amp;quot;, new DotNetCoreBuildSettings {
+        Configuration = &amp;quot;Release&amp;quot;,
+        NoIncremental = true,
+        MSBuildSettings = new DotNetCoreMSBuildSettings()
+            .WithProperty(&amp;quot;Version&amp;quot;, version)
+            .WithProperty(&amp;quot;AssemblyVersion&amp;quot;, version)
+            .WithProperty(&amp;quot;FileVersion&amp;quot;, version)
+    });
+});
+
+Task(&amp;quot;Publish&amp;quot;)
+    .IsDependentOn(&amp;quot;Build&amp;quot;)
+    .Does(context =&amp;gt; 
+{
+    // Make sure that there is an API key.
+    var apiKey =  context.EnvironmentVariable(&amp;quot;NUGET_API_KEY&amp;quot;);
+    if (string.IsNullOrWhiteSpace(apiKey)) {
+        throw new CakeException(&amp;quot;No NuGet API key specified.&amp;quot;);
+    }
+
+    // Pack all projects
+    context.DotNetCorePack($&amp;quot;./src/MyProject.sln&amp;quot;, new DotNetCorePackSettings {
+        Configuration = &amp;quot;Release&amp;quot;,
+        OutputDirectory = &amp;quot;./.artifacts&amp;quot;,
+        NoBuild = true,
+        MSBuildSettings = new DotNetCoreMSBuildSettings()
+            .WithProperty(&amp;quot;PackageVersion&amp;quot;, semanticVersion)
+    });
+
+    // Publish all projects
+    foreach(var file in GetFiles(&amp;quot;./.artifacts/*.nupkg&amp;quot;))
+    {
+        context.Information(&amp;quot;Publishing {0}...&amp;quot;, file.Path.GetFilename().FullPath);
+        context.NuGetPush(file, new NuGetPushSettings {
+            ApiKey = apiKey,
+            Source = &amp;quot;https://api.nuget.org/v3/index.json&amp;quot;
+        });
+    }
+});
+
+RunTarget(Argument(&amp;quot;target&amp;quot;, &amp;quot;Build&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You would probably want to do a lot of other stuff there as well such
+as running tests and separating packing from publishing so you can get
+the packages without doing an actual publish, but this is just for
+demonstrational purposes. You could also call &lt;em&gt;MinVer&lt;/em&gt; directly
+from your &lt;em&gt;Cake&lt;/em&gt; script, or use it
+&lt;a href="https://github.com/adamralph/minver#usage"&gt;in other ways&lt;/a&gt;, but I
+like this approach since it's simple, easy to understand and keeps the
+build script easy to understand.&lt;/p&gt;
+&lt;p&gt;Why not do everything in the GitHub Action, you might think? Well,
+I like to decouple my builds from the build server I'm using,
+making it possible to run the same build on my machine.&lt;/p&gt;
+&lt;h1 id="summary"&gt;Summary&lt;/h1&gt;
+&lt;p&gt;In this blog post, I've described how to install local .NET tools whose
+definitions we store in the repository, creating GitHub YAML build definitions
+that is used to bootstrap our build process, and how to write and run a
+Cake build script which does the heavy lifting.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;I recently started moving some builds from TeamCity, Travis, and AppVeyor to GitHub actions,
+and while doing that, I thought I would also move to a more straightforward deployment process.&lt;/p&gt;</summary>
+	</entry>
 	<entry>
 		<id>https://patriksvensson.se/2020/06/enumerating-monitors-in-rust-using-win32-api</id>
 		<title>Enumerating monitors in Rust using Win32 API</title>
@@ -1613,60 +1785,5 @@ tools\Cake\Cake.exe build.cake -target=Default -verbosity=diagnostic
 &lt;p&gt;For more information about Cake, see &lt;a href="http://cake.readthedocs.org"&gt;http://cake.readthedocs.org&lt;/a&gt;.&lt;/p&gt;
 </content>
 		<summary>&lt;p&gt;In this blog post I will show you how to use &lt;a href="https://github.com/cake-build/cake"&gt;Cake&lt;/a&gt; with your AppVeyor CI builds.&lt;/p&gt;</summary>
-	</entry>
-	<entry>
-		<id>https://patriksvensson.se/2014/08/script-aliases</id>
-		<title>Script aliases</title>
-		<author>
-			<name>Patrik Svensson</name>
-		</author>
-		<link href="https://patriksvensson.se/2014/08/script-aliases" />
-		<updated>2014-08-19T00:00:00Z</updated>
-		<content>&lt;p&gt;Cake supports something called script aliases. Script aliases are convenience methods that are easily accessible directly from a Cake script. Every &lt;a href="http://cake.readthedocs.org/en/latest/api-documentation.html"&gt;API method&lt;/a&gt; in Cake is implemented like this.&lt;/p&gt;
-&lt;p&gt;In this blog post I will show how to extend Cake with your own script aliases. It's really simple, I promise. ;-)&lt;/p&gt;
-&lt;!--excerpt--&gt;
-&lt;h2 id="creating-an-extension"&gt;Creating an extension&lt;/h2&gt;
-&lt;p&gt;Start by creating a new class library project and add a reference to the &lt;code&gt;Cake.Core&lt;/code&gt; NuGet package.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;PM&amp;gt; Install-Package Cake.Core
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Add the script alias method that you want to expose to your Cake script. A script alias method is simply an extension method for &lt;code&gt;ICakeContext&lt;/code&gt; that's been marked with the &lt;code&gt;CakeMethodAlias&lt;/code&gt; attribute.&lt;/p&gt;
-&lt;p&gt;You could also add an script alias property, which works the same way as a script alias method, except that it accepts no arguments and is marked with the &lt;code&gt;CakePropertyAlias&lt;/code&gt; attribute.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;using Cake.Core;
-using Cake.Core.Annotations;
-
-public static class MyCakeExtension
-{
-   [CakeMethodAlias]
-   public static int GetMagicNumber(this ICakeContext context, bool minValue)
-   {
-      return minValue ? int.MinValue : int.MaxValue;
-   }
-
-   [CakePropertyAlias]
-   public static int TheAnswerToLife(this ICakeContext context)
-   {
-      return 42;
-   }
-}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="using-the-extension"&gt;Using the extension&lt;/h2&gt;
-&lt;p&gt;Compile the assembly and add a reference to it in the build script via the &lt;code&gt;#r&lt;/code&gt; directive.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;#r &amp;quot;tools/MyCakeExtension.dll&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Now you should be able to call the method from the script.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Task(&amp;quot;GetSomeAnswers&amp;quot;)
-   .Does(() =&amp;gt;
-{
-    // Write the values to the console. 
-    Information(&amp;quot;Magic number: {0}&amp;quot;, GetMagicNumber(false));
-    Information(&amp;quot;The answer to life: {0}&amp;quot;, TheAnswerToLife);
-});
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
-&lt;p&gt;This covers the basics of how to create script aliases in Cake.&lt;br /&gt;
-If you create a cool extension, tell me about it and I will link to it from the &lt;a href="https://github.com/cake-build/cake"&gt;Cake repository&lt;/a&gt;.&lt;/p&gt;
-</content>
-		<summary>&lt;p&gt;Cake supports something called script aliases. Script aliases are convenience methods that are easily accessible directly from a Cake script. Every &lt;a href="http://cake.readthedocs.org/en/latest/api-documentation.html"&gt;API method&lt;/a&gt; in Cake is implemented like this.&lt;/p&gt;
-&lt;p&gt;In this blog post I will show how to extend Cake with your own script aliases. It's really simple, I promise. ;-)&lt;/p&gt;</summary>
 	</entry>
 </feed>
