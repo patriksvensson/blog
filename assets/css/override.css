@@ -9,3 +9,12 @@
 blockquote p {
     margin: 0 0 0 0;
 }
+
+.list-unstyled {
+    list-style-type: none; 
+    padding: 0px;
+}
+
+.list-unstyled > li {
+    padding: 0px;
+}

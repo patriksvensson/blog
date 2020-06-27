@@ -3,11 +3,11 @@
 	<channel>
 		<title>Patrik Svensson</title>
 		<link>https://patriksvensson.se/</link>
-		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
+		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Sat, 27 Jun 2020 07:40:12 GMT</pubDate>
-		<lastBuildDate>Sat, 27 Jun 2020 07:40:12 GMT</lastBuildDate>
+		<pubDate>Sat, 27 Jun 2020 22:00:14 GMT</pubDate>
+		<lastBuildDate>Sat, 27 Jun 2020 22:00:14 GMT</lastBuildDate>
 		<item>
 			<title>Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
 			<link>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</link>

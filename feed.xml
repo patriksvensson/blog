@@ -7,8 +7,8 @@
 	</author>
 	<link rel="self" href="https://patriksvensson.se/" />
 	<rights>2020</rights>
-	<updated>2020-06-27T07:40:12Z</updated>
-	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
+	<updated>2020-06-27T22:00:14Z</updated>
+	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
 	<entry>
 		<id>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</id>
 		<title>Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
