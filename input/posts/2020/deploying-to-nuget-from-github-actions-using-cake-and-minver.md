@@ -27,7 +27,7 @@ which always worked well for me, but I wanted to try out something else for this
 Before gettings started, let's add Cake and MinVer as local tools in the repository.
 
 ```
-> dotnet add tool-manifest
+> dotnet new tool-manifest
 > dotnet tool install cake.tool
 > dotnet tool install minver-cli
 > dotnet tool restore
@@ -178,8 +178,7 @@ the packages without doing an actual publish, but this is just for
 demonstrational purposes. You could also call _MinVer_ directly 
 from your _Cake_ script, or use it 
 [in other ways](https://github.com/adamralph/minver#usage), but I
-like this approach since it's simple, easy to understand and keeps the 
-build script easy to understand.
+like this approach since it's simple and easy to understand.
 
 Why not do everything in the GitHub Action, you might think? Well, 
 I like to decouple my builds from the build server I'm using, 
