@@ -95,7 +95,7 @@ I've been a long-time user of <a href="https://github.com/GitTools/GitVersion">G
 which always worked well for me, but I wanted to try out something else for this.</p>
 <h2 id="install-prerequisites">Install prerequisites</h2>
 <p>Before gettings started, let's add Cake and MinVer as local tools in the repository.</p>
-<pre><code>&gt; dotnet add tool-manifest
+<pre><code>&gt; dotnet new tool-manifest
 &gt; dotnet tool install cake.tool
 &gt; dotnet tool install minver-cli
 &gt; dotnet tool restore
@@ -234,8 +234,7 @@ the packages without doing an actual publish, but this is just for
 demonstrational purposes. You could also call <em>MinVer</em> directly
 from your <em>Cake</em> script, or use it
 <a href="https://github.com/adamralph/minver#usage">in other ways</a>, but I
-like this approach since it's simple, easy to understand and keeps the
-build script easy to understand.</p>
+like this approach since it's simple and easy to understand.</p>
 <p>Why not do everything in the GitHub Action, you might think? Well,
 I like to decouple my builds from the build server I'm using,
 making it possible to run the same build on my machine.</p>

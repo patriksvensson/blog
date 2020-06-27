@@ -6,8 +6,8 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, CI/CD and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Fri, 26 Jun 2020 22:15:20 GMT</pubDate>
-		<lastBuildDate>Fri, 26 Jun 2020 22:15:20 GMT</lastBuildDate>
+		<pubDate>Sat, 27 Jun 2020 07:40:12 GMT</pubDate>
+		<lastBuildDate>Sat, 27 Jun 2020 07:40:12 GMT</lastBuildDate>
 		<item>
 			<title>Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
 			<link>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</link>
@@ -27,7 +27,7 @@ I've been a long-time user of &lt;a href="https://github.com/GitTools/GitVersion
 which always worked well for me, but I wanted to try out something else for this.&lt;/p&gt;
 &lt;h2 id="install-prerequisites"&gt;Install prerequisites&lt;/h2&gt;
 &lt;p&gt;Before gettings started, let's add Cake and MinVer as local tools in the repository.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;&amp;gt; dotnet add tool-manifest
+&lt;pre&gt;&lt;code&gt;&amp;gt; dotnet new tool-manifest
 &amp;gt; dotnet tool install cake.tool
 &amp;gt; dotnet tool install minver-cli
 &amp;gt; dotnet tool restore
@@ -166,8 +166,7 @@ the packages without doing an actual publish, but this is just for
 demonstrational purposes. You could also call &lt;em&gt;MinVer&lt;/em&gt; directly
 from your &lt;em&gt;Cake&lt;/em&gt; script, or use it
 &lt;a href="https://github.com/adamralph/minver#usage"&gt;in other ways&lt;/a&gt;, but I
-like this approach since it's simple, easy to understand and keeps the
-build script easy to understand.&lt;/p&gt;
+like this approach since it's simple and easy to understand.&lt;/p&gt;
 &lt;p&gt;Why not do everything in the GitHub Action, you might think? Well,
 I like to decouple my builds from the build server I'm using,
 making it possible to run the same build on my machine.&lt;/p&gt;
