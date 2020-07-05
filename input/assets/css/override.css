@@ -18,3 +18,7 @@ blockquote p {
 .list-unstyled > li {
     padding: 0px;
 }
+
+.no-link-underline {
+    border-bottom: none;
+}
