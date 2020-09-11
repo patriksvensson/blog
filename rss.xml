@@ -6,8 +6,8 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Sun, 05 Jul 2020 14:49:38 GMT</pubDate>
-		<lastBuildDate>Sun, 05 Jul 2020 14:49:38 GMT</lastBuildDate>
+		<pubDate>Fri, 11 Sep 2020 10:24:01 GMT</pubDate>
+		<lastBuildDate>Fri, 11 Sep 2020 10:24:01 GMT</lastBuildDate>
 		<item>
 			<title>Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
 			<link>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</link>
