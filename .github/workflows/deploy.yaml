@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@master
     - uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '3.1.100' # SDK Version to use.
+        dotnet-version: '3.1.200' # SDK Version to use.
     - run: dotnet run -- deploy
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
