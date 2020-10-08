@@ -6,8 +6,31 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2020</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Fri, 11 Sep 2020 10:24:01 GMT</pubDate>
-		<lastBuildDate>Fri, 11 Sep 2020 10:24:01 GMT</lastBuildDate>
+		<pubDate>Thu, 08 Oct 2020 13:45:19 GMT</pubDate>
+		<lastBuildDate>Thu, 08 Oct 2020 13:45:19 GMT</lastBuildDate>
+		<item>
+			<title>Thank you Octopus Deploy!</title>
+			<link>https://patriksvensson.se/2020/10/thank-you-octopus-deploy</link>
+			<description>&lt;p&gt;&lt;em&gt;(This blog post was cross posted from &lt;a href="https://cakebuild.net/blog/2020/10/octopus-deploy"&gt;the Cake blog&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;</description>
+			<author>Patrik Svensson</author>
+			<guid>https://patriksvensson.se/2020/10/thank-you-octopus-deploy</guid>
+			<pubDate>Thu, 08 Oct 2020 00:00:00 GMT</pubDate>
+			<content:encoded>&lt;p&gt;&lt;em&gt;(This blog post was cross posted from &lt;a href="https://cakebuild.net/blog/2020/10/octopus-deploy"&gt;the Cake blog&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
+&lt;h2 id="some-background"&gt;Some background&lt;/h2&gt;
+&lt;p&gt;When I started working on Cake in 2014, I did it to scratch an itch I had. &lt;a href="https://fake.build/"&gt;FAKE&lt;/a&gt; existed (which has been a tremendous initial inspiration), but I didn't know F# enough (at all) to be confident enough to bet our build process on it.&lt;/p&gt;
+&lt;p&gt;A lot has happened since then; .NET has changed, and so has Cake. We've moved from a separate &lt;em&gt;Roslyn&lt;/em&gt; and &lt;em&gt;Mono&lt;/em&gt; engine to a unified one based on &lt;em&gt;Roslyn&lt;/em&gt;. We've added support for &lt;em&gt;C# 6&lt;/em&gt;, &lt;em&gt;7&lt;/em&gt;, &lt;em&gt;8&lt;/em&gt;, and just recently &lt;em&gt;9&lt;/em&gt;. In addition to &lt;em&gt;.NET Framework&lt;/em&gt;, we've added support for every version of &lt;em&gt;.NET Core&lt;/em&gt;, from the early beta to .NET 5. The project has also gone from a single maintainer to nine, which I think is the biggest reason for its success.&lt;/p&gt;
+&lt;p&gt;We keep a close eye on statistics. Not only is it satisfying seeing the numbers go up, but it's also an indicator that people and companies still use our little project. Cake in its different incarnations has been downloaded over 12 million times and is the &lt;a href="https://www.nuget.org/packages?packagetype=dotnettool&amp;amp;sortby=totalDownloads-desc&amp;amp;q=&amp;amp;prerel=True"&gt;third most downloaded dotnet tool&lt;/a&gt; on &lt;em&gt;NuGet&lt;/em&gt;. Build tools don't often get credit as libraries do, but we know that some big companies like &lt;a href="https://www.microsoft.com/"&gt;Microsoft&lt;/a&gt; and &lt;a href="https://github.com/"&gt;GitHub&lt;/a&gt; use Cake in their build process. However, no company has ever reached out to us about &lt;a href="https://opencollective.com/cake"&gt;sponsoring us&lt;/a&gt; in any way. That is until a couple of weeks ago.&lt;/p&gt;
+&lt;h2 id="getting-our-first-sponsor"&gt;Getting our first sponsor&lt;/h2&gt;
+&lt;p&gt;Out of the blue, &lt;a href="https://paulstovell.com/"&gt;Paul Stovell&lt;/a&gt;, the founder of &lt;a href="https://octopus.com/"&gt;Octopus Deploy&lt;/a&gt;, reached out to me and wondered if we would let them become an official Cake sponsor! I'm personally a big fan of &lt;em&gt;Octopus Deploy&lt;/em&gt;, a tool that I've been using a lot throughout my career, and I must confess I was very humbled that such a great company wanted to sponsor our little project.&lt;/p&gt;
+&lt;p&gt;We've always worked on Cake in our free time, but having sponsors opens up for so many things. Suddenly, we can put even more time into the project, and we can hire external services for things that we sometimes don't have the experience or knowledge about ourselves.&lt;/p&gt;
+&lt;p&gt;I'm not saying that your company should sponsor Cake, but you should take a moment, reflect on what projects you depend on, &lt;a href="https://opencollective.com/cake"&gt;and try to make sure that those projects stay around&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id="summary"&gt;Summary&lt;/h2&gt;
+&lt;p&gt;To put it short, companies like &lt;em&gt;Octopus Deploy&lt;/em&gt;, that sponsor projects that they depend on, &lt;strong&gt;make open source sustainable&lt;/strong&gt;, and I want to say a personal &lt;strong&gt;thank you&lt;/strong&gt; to them for doing it!&lt;/p&gt;
+&lt;hr /&gt;
+&lt;p&gt;You should check them out if you haven't already: &lt;a href="https://octopus.com"&gt;https://octopus.com&lt;/a&gt;&lt;/p&gt;
+</content:encoded>
+			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
+		</item>
 		<item>
 			<title>Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
 			<link>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</link>
@@ -1699,68 +1722,6 @@ to the application.&lt;/p&gt;
 &lt;p&gt;Also, if you're interested in Kudu (which is awesome), check out &lt;a href="https://twitter.com/devlead"&gt;devlead&lt;/a&gt;'s
 appearance on &lt;em&gt;Azure Podcast&lt;/em&gt; where he spends 30 minutes or so talking about it:
 &lt;a href="http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter"&gt;http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter&lt;/a&gt;&lt;/p&gt;
-</content:encoded>
-			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
-		</item>
-		<item>
-			<title>Cake and AppVeyor integration</title>
-			<link>https://patriksvensson.se/2014/11/cake-and-appveyor-integration</link>
-			<description>&lt;p&gt;In this blog post I will show you how to use &lt;a href="https://github.com/cake-build/cake"&gt;Cake&lt;/a&gt; with your AppVeyor CI builds.&lt;/p&gt;</description>
-			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2014/11/cake-and-appveyor-integration</guid>
-			<pubDate>Sun, 23 Nov 2014 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;In this blog post I will show you how to use &lt;a href="https://github.com/cake-build/cake"&gt;Cake&lt;/a&gt; with your AppVeyor CI builds.&lt;/p&gt;
-&lt;!--excerpt--&gt;
-&lt;h2 id="create-the-build-script"&gt;1. Create the build script&lt;/h2&gt;
-&lt;p&gt;Add a build script called &lt;code&gt;build.cake&lt;/code&gt; to the project root. In this tutorial, we'll just create a really simple build script for demonstration.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;// Get the target.
-var target = Argument&amp;lt;string&amp;gt;("target", "Default");
-
-Task("Default")
-  .Does(() =&amp;gt;
-{
-	Information("Hello from Cake!");
-});
-
-RunTarget(target);
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="create-a-bootstrapper-script"&gt;2. Create a bootstrapper script&lt;/h2&gt;
-&lt;p&gt;Create a old fashioned batch file called &lt;code&gt;build.cmd&lt;/code&gt; that will download Cake and execute the build script.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;@echo off
-
-:Build
-cls
-
-if not exist tools\Cake\Cake.exe ( 
-	echo Installing Cake...
-	tools\NuGet.exe install Cake -OutputDirectory tools -ExcludeVersion -NonInteractive -Prerelease
-)
-
-echo Starting Cake...
-tools\Cake\Cake.exe build.cake -target=Default -verbosity=diagnostic
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="add-nuget.exe-to-your-repository"&gt;3. Add NuGet.exe to your repository&lt;/h2&gt;
-&lt;p&gt;Start by copying &lt;code&gt;NuGet.exe&lt;/code&gt; to your tools folder. Cake uses the &lt;code&gt;tools&lt;/code&gt; path as a convention for finding stuff it needs such as unit test runners and other tools.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;MyProject/
-&lt;ul&gt;
-&lt;li&gt;tools/
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;NuGet.exe&lt;/strong&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;build.cake&lt;/li&gt;
-&lt;li&gt;build.cmd&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id="tell-appveyor-what-to-do"&gt;4. Tell AppVeyor what to do&lt;/h2&gt;
-&lt;p&gt;Now we need to tell AppVeyor how to start the Cake build. Do this by setting the build script for your AppVeyor project to &lt;code&gt;build.cmd&lt;/code&gt;. Save your settings and you should be done.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/cake-appveyor-build-settings.png" alt="AppVeyor Build Settings"&gt;&lt;/p&gt;
-&lt;h2 id="profit"&gt;5. Profit&lt;/h2&gt;
-&lt;p&gt;The next triggered build will now execute the Cake build script as expected.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/cake-appveyor-profit.png" alt="AppVeyor Build"&gt;&lt;/p&gt;
-&lt;p&gt;For more information about Cake, see &lt;a href="http://cake.readthedocs.org"&gt;http://cake.readthedocs.org&lt;/a&gt;.&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
