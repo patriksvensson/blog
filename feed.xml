@@ -7,7 +7,7 @@
 	</author>
 	<link rel="self" href="https://patriksvensson.se/" />
 	<rights>2021</rights>
-	<updated>2021-12-22T12:42:49Z</updated>
+	<updated>2021-12-22T13:16:29Z</updated>
 	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
 	<entry>
 		<id>https://patriksvensson.se/2021/12/intellisense-for-your-github-actions-workflows</id>
@@ -26,8 +26,8 @@ evil so we're stuck with YAML for that part.&lt;/p&gt;
 at &lt;a href="https://json.schemastore.org/github-workflow.json"&gt;json.schemastore.org&lt;/a&gt;,
 and that means that we can use
 &lt;a href="https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml"&gt;Red Hat's YAML VSCode extension&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/gh_workflow_schema.png" alt="A GitHub Actions job"&gt;&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;"What does a JSON schema have to do with a VSCode YAML extension?"&lt;/em&gt; you
+&lt;img src="/images/gh_workflow_schema.png" style="margin-bottom:30px"&gt;
+&lt;p&gt;&lt;em&gt;&amp;quot;What does a JSON schema have to do with a VSCode YAML extension?&amp;quot;&lt;/em&gt; you
 might ask. Excellent question. It turns out that Red Hat's YAML extension
 has support for JSON schemas out of the box.&lt;/p&gt;
 &lt;p&gt;To enable this for your GitHub Actions workflows, add the following
