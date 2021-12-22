@@ -6,17 +6,17 @@
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
 		<copyright>2021</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Wed, 22 Dec 2021 12:35:27 GMT</pubDate>
-		<lastBuildDate>Wed, 22 Dec 2021 12:35:27 GMT</lastBuildDate>
+		<pubDate>Wed, 22 Dec 2021 12:42:49 GMT</pubDate>
+		<lastBuildDate>Wed, 22 Dec 2021 12:42:49 GMT</lastBuildDate>
 		<item>
-			<title>Intellisense for your GitHub Action workflows</title>
-			<link>https://patriksvensson.se/2021/12/intellisense-for-your-github-action-workflows</link>
+			<title>Intellisense for your GitHub Actions workflows</title>
+			<link>https://patriksvensson.se/2021/12/intellisense-for-your-github-actions-workflows</link>
 			<description>&lt;p&gt;Although I'm a big fan of GitHub, I'm not a big fan of YAML.
 When it comes to orchestrating my builds, I usually prefer some kind
 of build script, but bootstrapping that build script is a necessary
 evil so we're stuck with YAML for that part.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2021/12/intellisense-for-your-github-action-workflows</guid>
+			<guid>https://patriksvensson.se/2021/12/intellisense-for-your-github-actions-workflows</guid>
 			<pubDate>Wed, 22 Dec 2021 00:00:00 GMT</pubDate>
 			<content:encoded>&lt;p&gt;Although I'm a big fan of GitHub, I'm not a big fan of YAML.
 When it comes to orchestrating my builds, I usually prefer some kind
