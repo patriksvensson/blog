@@ -8,7 +8,7 @@
 
 <head>
 
-    <title>Patrik Svensson - Patrik Svensson</title>
+    <title>Patrik Svensson - Intellisense for your GitHub Action workflows</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/default.min.css">
@@ -32,9 +32,9 @@
     <meta name="msapplication-tooltip" content="Patrik Svensson" />
     <meta name="msapplication-starturl" content="/" />
 
-    <meta property="og:title" content="Patrik Svensson - Patrik Svensson" />
+    <meta property="og:title" content="Patrik Svensson - Intellisense for your GitHub Action workflows" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://patriksvensson.se/tags/windows-10" />
+    <meta property="og:url" content="https://patriksvensson.se/2021/12/intellisense-for-your-github-action-workflows" />
     <!-- TODO: More social graph meta tags -->
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/highlight.min.js"></script>
@@ -69,43 +69,37 @@
         <div id="main">
             <div class="inner">
 
-                <h1>Windows 10</h1>
+                <header>
+    <h1>Intellisense for your GitHub Action workflows</h1>
+    <p><em>Published on Wednesday, December 22, 2021</em>
+    </p>
+
+    <ul class="actions small">
+        <li><a role="button" href="/tags/github" class="button small ">GitHub</a></li>
+        <li><a role="button" href="/tags/github-actions" class="button small ">GitHub Actions</a></li>
+    </ul>
+</header>
 
 <div id="content">
-    <div class="row">
-        <div class="8u 12u$(medium)">
-            <div>
-                <a href="/2020/02/testing-stuff-with-windows-sandbox">
-                    <h2>Testing stuff with Windows Sandbox</h2>
-                </a>
-                <p><em>Posted on Sunday, February 23, 2020</em></p>
-            </div>
-            <div>
-                <a href="/2019/12/roaming-profiles-with-windows-terminal">
-                    <h2>Roaming profiles with Windows Terminal</h2>
-                </a>
-                <p><em>Posted on Monday, December 2, 2019</em></p>
-            </div>
-        </div>
+    <p>Although I'm a big fan of GitHub, I'm not a big fan of YAML.
+When it comes to orchestrating my builds, I usually prefer some kind
+of build script, but bootstrapping that build script is a necessary
+evil so we're stuck with YAML for that part.</p>
+<!--excerpt-->
+<p>Today I found out that there is a JSON schema for GitHub Actions over
+at <a href="https://json.schemastore.org/github-workflow.json">json.schemastore.org</a>,
+and that means that we can use
+<a href="https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml">Red Hat's YAML VSCode extension</a>.</p>
+<p><img src="/images/gh_workflow_schema.png" alt="A GitHub Actions job" /></p>
+<p><em>&quot;What does a JSON schema have to do with a VSCode YAML extension?&quot;</em> you
+might ask. Excellent question. It turns out that Red Hat's YAML extension
+has support for JSON schemas out of the box.</p>
+<p>To enable this for your GitHub Actions workflows, add the following
+line to the top of your workflow file:</p>
+<pre><code># yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+</code></pre>
+<p>Sanity restored.</p>
 
-        <div class="4u 12u$(medium)">
-            <ul class="actions small">
-                <li><a role="button" href="/tags/net" class="button small ">.NET (16)</a></li>
-                <li><a role="button" href="/tags/csharp" class="button small ">C# (12)</a></li>
-                <li><a role="button" href="/tags/cake" class="button small ">Cake (5)</a></li>
-                <li><a role="button" href="/tags/github" class="button small ">GitHub (4)</a></li>
-                <li><a role="button" href="/tags/github-actions" class="button small ">GitHub Actions (3)</a></li>
-                <li><a role="button" href="/tags/rust" class="button small ">Rust (3)</a></li>
-                <li><a role="button" href="/tags/debugging" class="button small ">Debugging (2)</a></li>
-                <li><a role="button" href="/tags/windows-10" class="button small ">Windows 10 (2)</a></li>
-                <li><a role="button" href="/tags/wpf" class="button small ">WPF (2)</a></li>
-                <li><a role="button" href="/tags/appveyor" class="button small ">AppVeyor (1)</a></li>
-            </ul>
-            <ul class="actions small">
-                <li><a href="/tags" class="button small">View All Tags &rarr;</a></li>
-            </ul>
-        </div>
-    </div>
 </div>
 
             </div>

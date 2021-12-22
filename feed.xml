@@ -7,8 +7,40 @@
 	</author>
 	<link rel="self" href="https://patriksvensson.se/" />
 	<rights>2021</rights>
-	<updated>2021-06-17T08:47:29Z</updated>
+	<updated>2021-12-22T12:35:27Z</updated>
 	<subtitle>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</subtitle>
+	<entry>
+		<id>https://patriksvensson.se/2021/12/intellisense-for-your-github-action-workflows</id>
+		<title>Intellisense for your GitHub Action workflows</title>
+		<author>
+			<name>Patrik Svensson</name>
+		</author>
+		<link href="https://patriksvensson.se/2021/12/intellisense-for-your-github-action-workflows" />
+		<updated>2021-12-22T00:00:00Z</updated>
+		<content>&lt;p&gt;Although I'm a big fan of GitHub, I'm not a big fan of YAML.
+When it comes to orchestrating my builds, I usually prefer some kind
+of build script, but bootstrapping that build script is a necessary
+evil so we're stuck with YAML for that part.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;Today I found out that there is a JSON schema for GitHub Actions over
+at &lt;a href="https://json.schemastore.org/github-workflow.json"&gt;json.schemastore.org&lt;/a&gt;,
+and that means that we can use
+&lt;a href="https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml"&gt;Red Hat's YAML VSCode extension&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/images/gh_workflow_schema.png" alt="A GitHub Actions job"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;"What does a JSON schema have to do with a VSCode YAML extension?"&lt;/em&gt; you
+might ask. Excellent question. It turns out that Red Hat's YAML extension
+has support for JSON schemas out of the box.&lt;/p&gt;
+&lt;p&gt;To enable this for your GitHub Actions workflows, add the following
+line to the top of your workflow file:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Sanity restored.&lt;/p&gt;
+</content>
+		<summary>&lt;p&gt;Although I'm a big fan of GitHub, I'm not a big fan of YAML.
+When it comes to orchestrating my builds, I usually prefer some kind
+of build script, but bootstrapping that build script is a necessary
+evil so we're stuck with YAML for that part.&lt;/p&gt;</summary>
+	</entry>
 	<entry>
 		<id>https://patriksvensson.se/2020/10/thank-you-octopus-deploy</id>
 		<title>Thank you Octopus Deploy!</title>
@@ -29,7 +61,7 @@
 &lt;h2 id="summary"&gt;Summary&lt;/h2&gt;
 &lt;p&gt;To put it short, companies like &lt;em&gt;Octopus Deploy&lt;/em&gt;, that sponsor projects that they depend on, &lt;strong&gt;make open source sustainable&lt;/strong&gt;, and I want to say a personal &lt;strong&gt;thank you&lt;/strong&gt; to them for doing it!&lt;/p&gt;
 &lt;hr /&gt;
-&lt;p&gt;You should check them out if you haven't already: &lt;a href="https://octopus.com"&gt;https://octopus.com&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;You should check them out if you haven't already: &lt;a href="https://octopus.com/"&gt;https://octopus.com&lt;/a&gt;&lt;/p&gt;
 </content>
 		<summary>&lt;p&gt;&lt;em&gt;(This blog post was cross posted from &lt;a href="https://cakebuild.net/blog/2020/10/octopus-deploy"&gt;the Cake blog&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;</summary>
 	</entry>
@@ -419,7 +451,7 @@ wanted to learn more about Rust's different platform tiers, toolchain targets, a
 </content>
 		<summary>&lt;p&gt;I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
 ARM64 device the other day. My initial thought when I got the idea, was
-"I hope it's not complicated to do".&lt;/p&gt;
+&amp;amp;quot;I hope it's not complicated to do&amp;amp;quot;.&lt;/p&gt;
 &lt;p&gt;TLDR; it wasn't.&lt;/p&gt;</summary>
 	</entry>
 	<entry>
@@ -1438,7 +1470,7 @@ rustc 1.23.0 (766bd11c8 2018-01-01)
 		<updated>2018-01-30T00:00:00Z</updated>
 		<content>&lt;p&gt;In my new project &lt;a href="https://github.com/spectresystems/jarvis"&gt;Jarvis&lt;/a&gt; I wanted to start
 generate preview versions of the MSI packages, but one problem with that is that MSI
-requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;
+requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org/"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;A solution to this is to use the following formula (originally found &lt;a href="https://github.com/semver/semver/issues/332"&gt;here&lt;/a&gt;), where &lt;code&gt;PRE&lt;/code&gt; is the pre-release number (normally the number of commits for the current patch).&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;ENSURE (PATCH &amp;gt;= 0 &amp;amp;&amp;amp; PATCH &amp;lt; 54)
 ENSURE (PRE &amp;gt;= 0 &amp;amp;&amp;amp; PRE &amp;lt; 1000)
@@ -1504,7 +1536,7 @@ PATCH = 10000 + (PATCH * 1000) + PRE
 </content>
 		<summary>&lt;p&gt;In my new project &lt;a href="https://github.com/spectresystems/jarvis"&gt;Jarvis&lt;/a&gt; I wanted to start
 generate preview versions of the MSI packages, but one problem with that is that MSI
-requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;</summary>
+requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org/"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;</summary>
 	</entry>
 	<entry>
 		<id>https://patriksvensson.se/2017/12/binding-to-a-richtextbox-in-wpf</id>
@@ -1619,7 +1651,7 @@ different elements depending on your build configuration.&lt;/p&gt;
 		</author>
 		<link href="https://patriksvensson.se/2017/11/using-embedded-resources-in-xunit-tests" />
 		<updated>2017-11-11T00:00:00Z</updated>
-		<content>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
+		<content>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net/"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
 &lt;a href="https://andrewlock.net/creating-parameterised-tests-in-xunit-with-inlinedata-classdata-and-memberdata"&gt;Creating parameterised tests in xUnit&lt;/a&gt;
 when I remembered something I wrote a while back that has proven to be quite useful.&lt;/p&gt;
 &lt;p&gt;The code in question allows you to use embedded resources with &lt;a href="https://xunit.github.io/docs/getting-started-desktop.html#write-first-theory"&gt;xUnit's theory concept&lt;/a&gt;
@@ -1692,7 +1724,7 @@ namespace MyProject.Tests
 }
 &lt;/code&gt;&lt;/pre&gt;
 </content>
-		<summary>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
+		<summary>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net/"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
 &lt;a href="https://andrewlock.net/creating-parameterised-tests-in-xunit-with-inlinedata-classdata-and-memberdata"&gt;Creating parameterised tests in xUnit&lt;/a&gt;
 when I remembered something I wrote a while back that has proven to be quite useful.&lt;/p&gt;</summary>
 	</entry>
@@ -1718,32 +1750,5 @@ won't be evaluated.&lt;/p&gt;
 		<summary>&lt;p&gt;Yesterday I encountered a bug in a library I'm working on that only seemed
 to occur when compiled in release mode. I was scratching my head for a little
 while but suddenly it occured to me when I encountered the following line:&lt;/p&gt;</summary>
-	</entry>
-	<entry>
-		<id>https://patriksvensson.se/2016/12/azure-web-apps-and-the-certificate-store</id>
-		<title>Azure Web Apps and the certificate store</title>
-		<author>
-			<name>Patrik Svensson</name>
-		</author>
-		<link href="https://patriksvensson.se/2016/12/azure-web-apps-and-the-certificate-store" />
-		<updated>2016-12-07T00:00:00Z</updated>
-		<content>&lt;p&gt;I was trying to load a certificate from the certificate store in an Azure Web App today,
-and for some reason I could not find it via it's thumbprint. Since I thought I was
-looking in the wrong certificate store, I went to &lt;a href="https://github.com/projectkudu/kudu"&gt;Kudu&lt;/a&gt;
-to take a closer look via the PowerShell debug console.&lt;/p&gt;
-&lt;p&gt;My code (probably) wasn't wrong but the certificate simply wasn't there.&lt;/p&gt;
-&lt;p&gt;After some googling I found out that WebApps in Azure doesn't have access to uploaded
-certificates unless you add a special AppSetting variable called &lt;code&gt;WEBSITE_LOAD_CERTIFICATES&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;You can either set this setting to a comma separated list of the certificate thumbprint that you want to expose,
-or you can do what I did (&lt;em&gt;YOLO™&lt;/em&gt;) and set it to &lt;code&gt;*&lt;/code&gt; which exposes all available certificates
-to the application.&lt;/p&gt;
-&lt;p&gt;Also, if you're interested in Kudu (which is awesome), check out &lt;a href="https://twitter.com/devlead"&gt;devlead&lt;/a&gt;'s
-appearance on &lt;em&gt;Azure Podcast&lt;/em&gt; where he spends 30 minutes or so talking about it:
-&lt;a href="http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter"&gt;http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter&lt;/a&gt;&lt;/p&gt;
-</content>
-		<summary>&lt;p&gt;I was trying to load a certificate from the certificate store in an Azure Web App today,
-and for some reason I could not find it via it's thumbprint. Since I thought I was
-looking in the wrong certificate store, I went to &lt;a href="https://github.com/projectkudu/kudu"&gt;Kudu&lt;/a&gt;
-to take a closer look via the PowerShell debug console.&lt;/p&gt;</summary>
 	</entry>
 </feed>

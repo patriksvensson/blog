@@ -83,7 +83,7 @@
 <div id="content">
     <p>In my new project <a href="https://github.com/spectresystems/jarvis">Jarvis</a> I wanted to start
 generate preview versions of the MSI packages, but one problem with that is that MSI
-requires the product version to be in the format <code>Major.Minor.Patch</code> which isn't compatible with <a href="https://semver.org">semantic verisoning</a>. We CAN use the <code>Major.Minor.Patch.Revision</code> format as a product version, but that won't work with <a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-">major upgrades</a>. An example of this would be <code>1.2.3-alpha45</code> which would require a different version number than <code>1.2.3-alpha46</code>.</p>
+requires the product version to be in the format <code>Major.Minor.Patch</code> which isn't compatible with <a href="https://semver.org/">semantic verisoning</a>. We CAN use the <code>Major.Minor.Patch.Revision</code> format as a product version, but that won't work with <a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-">major upgrades</a>. An example of this would be <code>1.2.3-alpha45</code> which would require a different version number than <code>1.2.3-alpha46</code>.</p>
 <p>A solution to this is to use the following formula (originally found <a href="https://github.com/semver/semver/issues/332">here</a>), where <code>PRE</code> is the pre-release number (normally the number of commits for the current patch).</p>
 <pre><code>ENSURE (PATCH &gt;= 0 &amp;&amp; PATCH &lt; 54)
 ENSURE (PRE &gt;= 0 &amp;&amp; PRE &lt; 1000)
