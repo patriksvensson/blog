@@ -1,6 +1,6 @@
 ---
-Title: Intellisense for your GitHub Action workflows
-Slug: intellisense-for-your-github-action-workflows
+Title: Intellisense for your GitHub Actions workflows
+Slug: intellisense-for-your-github-actions-workflows
 Published: 2021-12-22
 Tags:
 - GitHub
