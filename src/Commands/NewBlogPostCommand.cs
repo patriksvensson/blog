@@ -1,9 +1,10 @@
 using System;
 using System.Linq;
-using Spectre.Cli;
 using System.Text;
 using System.ComponentModel;
 using System.IO;
+using Spectre.Console;
+using Spectre.Console.Cli;
 
 namespace site.Commands
 {
@@ -52,6 +53,12 @@ namespace site.Commands
                 return -1;
             }
 
+            var directory = Path.GetDirectoryName(absolutePath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             File.WriteAllText(absolutePath, content);
 
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -72,7 +79,7 @@ namespace site.Commands
             builder.AppendLine($"Slug: {slug}");
             builder.AppendLine($"Published: {published.ToString("yyyy-MM-dd")}");
 
-            if(!settings.NoDraft)
+            if (!settings.NoDraft)
             {
                 builder.AppendLine($"Draft: True");
             }

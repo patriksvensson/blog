@@ -4,7 +4,7 @@
         "bin": true,
         "LICENSE": true,
         "obj": true,
-        "output": true,
+        "cache": true,
         "temp": true,
         "wwwroot": true
     }
