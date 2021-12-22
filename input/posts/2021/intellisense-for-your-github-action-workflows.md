@@ -19,7 +19,7 @@ at [json.schemastore.org](https://json.schemastore.org/github-workflow.json),
 and that means that we can use 
 [Red Hat's YAML VSCode extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml).
 
-![A GitHub Actions job](/images/gh_workflow_schema.png)
+<img src="/images/gh_workflow_schema.png" style="margin-bottom:30px">
 
 _"What does a JSON schema have to do with a VSCode YAML extension?"_ you 
 might ask. Excellent question. It turns out that Red Hat's YAML extension 
