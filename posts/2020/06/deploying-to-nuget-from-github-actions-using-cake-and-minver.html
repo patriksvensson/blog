@@ -1,0 +1,302 @@
+<!DOCTYPE html><html lang="en"><head>
+
+    <title>Patrik Svensson - Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss">
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+
+    <link href="/assets/styles.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+
+    <meta name="description" content="This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="Patrik Svensson">
+        <meta name="twitter:title" content="Deploying to NuGet from GitHub Actions using Cake and MinVer">
+        <meta name="twitter:creator" content="This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.">
+        <meta name="twitter:description" content="This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.">
+        <meta name="twitter:image" content="https://patriksvensson.se/posts/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver-social.png">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    
+</head>
+<body class="antialiased text-base-800 bg-base-800/10 dark:bg-base-800 transition-colors">
+<header class="sticky top-0 left-2 w-full backdrop-blur bg-base-100/80 dark:bg-base-800/80 border-b border-base-900/20 dark:border-base-50/10 shadow-md dark:shadow-lg py-2 md:py-4 z-50">
+    <nav class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 flex  items-center">
+        <h1>
+            <a class="font-extrabold text-2xl sm:text-3xl md:text-3xl base:text-3xl lg:text-4xl xl:text-4xl text-base-700 dark:text-base-300" href="/">
+                Patrik Svensson
+            </a>
+        </h1>
+
+        <div class="ml-auto flex items-center">
+            <a class="ml-2 mr-4 text-base-400 hover:text-blue-400 transition-all hover:scale-105" title="Twitter" href="https://twitter.com/firstdrafthell">
+                <svg width="1.7rem" height="1.7rem" class="fill-current" viewBox="328 355 335 276" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 630, 425 A 195, 195 0 0 1 331, 600 A 142, 142 0 0 0 428, 570 A  70,  70 0 0 1 370, 523 A  70,  70 0 0 0 401, 521 A  70,  70 0 0 1 344, 455 A  70,  70 0 0 0 372, 460 A  70,  70 0 0 1 354, 370 A 195, 195 0 0 0 495, 442 A  67,  67 0 0 1 611, 380 A 117, 117 0 0 0 654, 363 A  65,  65 0 0 1 623, 401 A 117, 117 0 0 0 662, 390 A  65,  65 0 0 1 630, 425 Z"></path>
+                </svg>
+            </a>
+
+            <a class="mr-4 text-base-400 hover:text-blue-400 transition-all hover:scale-105" title="LinkedIn" href="https://www.linkedin.com/in/psvensson82/">
+                <svg width="1.7rem" height="1.7rem" class="fill-current" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M150.65,100.682c0,27.992-22.508,50.683-50.273,50.683c-27.765,0-50.273-22.691-50.273-50.683
+                    C50.104,72.691,72.612,50,100.377,50C128.143,50,150.65,72.691,150.65,100.682z M143.294,187.333H58.277V462h85.017V187.333z
+                    M279.195,187.333h-81.541V462h81.541c0,0,0-101.877,0-144.181c0-38.624,17.779-61.615,51.807-61.615
+                    c31.268,0,46.289,22.071,46.289,61.615c0,39.545,0,144.181,0,144.181h84.605c0,0,0-100.344,0-173.915
+                    s-41.689-109.131-99.934-109.131s-82.768,45.369-82.768,45.369V187.333z"></path>
+                </svg>
+            </a>
+
+            <a class="text-base-400 hover:text-blue-400 transition-all hover:scale-105" title="GitHub" href="https://github.com/patriksvensson">
+                <svg width="1.7rem" height="1.7rem" class="fill-current" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8C0 11.54 2.29 14.53 5.47 15.59C5.87 15.66 6.02 15.42 6.02 15.21C6.02 15.02 6.01 14.39 6.01 13.72C4 14.09 3.48 13.23 3.32 12.78C3.23 12.55 2.84 11.84 2.5 11.65C2.22 11.5 1.82 11.13 2.49 11.12C3.12 11.11 3.57 11.7 3.72 11.94C4.44 13.15 5.59 12.81 6.05 12.6C6.12 12.08 6.33 11.73 6.56 11.53C4.78 11.33 2.92 10.64 2.92 7.58C2.92 6.71 3.23 5.99 3.74 5.43C3.66 5.23 3.38 4.41 3.82 3.31C3.82 3.31 4.49 3.1 6.02 4.13C6.66 3.95 7.34 3.86 8.02 3.86C8.7 3.86 9.38 3.95 10.02 4.13C11.55 3.09 12.22 3.31 12.22 3.31C12.66 4.41 12.38 5.23 12.3 5.43C12.81 5.99 13.12 6.7 13.12 7.58C13.12 10.65 11.25 11.33 9.47 11.53C9.76 11.78 10.01 12.26 10.01 13.01C10.01 14.08 10 14.94 10 15.21C10 15.42 10.15 15.67 10.55 15.59C13.71 14.53 16 11.53 16 8C16 3.58 12.42 0 8 0Z" transform="scale(64)"></path>
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    <nav class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 py-1 flex items-center">
+        <a class="text-base-500 hover:text-blue-400 transition-all mr-4" href="/about">About</a>
+        <a class="text-base-500 hover:text-blue-400 transition-all" href="https://github.com/sponsors/patriksvensson">Sponsor me</a>
+
+        <div class="ml-auto flex items-center">
+        <button aria-label="Toggle Dark Mode" class="ml-2 text-yellow-600 dark:text-base-500 stroke-1 opacity-80" style="padding-right: 2px;" onclick="swapTheme()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+        </button>
+        </div>
+    </nav>
+</header>
+
+<main class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 mt-4 mb-4 md:mb-16 font-light">
+    <header class="mt-6 mb-4 lg:mb-8">
+            <h2 class="font-bold text-primary-700/90 dark:text-primary-500/90 text-3xl lg:font-extrabold lg:text-4xl ">Deploying to NuGet from GitHub Actions using Cake and MinVer</h2>
+
+    <div class="mt-4">
+        <p class="mb-1 lg:my-b text-sm dark:text-gray-200">Posted <time>Monday, June 22, 2020</time></p>
+        
+<ul class="flex space-x-1 md:space-x-2 mb-4 overflow-hidden">
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/net"> .NET</a>
+        </li>
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/cake"> Cake</a>
+        </li>
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/minver"> MinVer</a>
+        </li>
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/github"> GitHub</a>
+        </li>
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/github-actions"> GitHub Actions</a>
+        </li>
+</ul>
+    
+    </div>
+    </header>
+    
+    
+
+
+<article class="prose dark:prose-invert mt-8 lg:prose-lg max-w-full font-light lg:leading-loose">
+    <p>I recently started moving some builds from TeamCity, Travis, and AppVeyor to GitHub actions,
+and while doing that, I thought I would also move to a more straightforward deployment process.</p>
+<p>Before, I used to push to NuGet by tagging the main branch, and while this is a perfectly reasonable
+approach, I wanted to change this to publish previews to NuGet on every push to the main branch.
+If it's a tagged commit on the main branch, a non-preview version should be published.</p>
+<p>To calculate the version number from Git history, I'll use
+<a href="https://github.com/adamralph/minver">MinVer</a> by Adam Ralph.<br>
+I've been a long-time user of <a href="https://github.com/GitTools/GitVersion">GitVersion</a>,
+which always worked well for me, but I wanted to try out something else for this.</p>
+<h2 id="install-prerequisites">Install prerequisites</h2>
+<p>Before gettings started, let's add Cake and MinVer as local tools in the repository.</p>
+<pre><code>&gt; dotnet new tool-manifest
+&gt; dotnet tool install cake.tool
+&gt; dotnet tool install minver-cli
+&gt; dotnet tool restore
+</code></pre>
+<p>There should now be a new directory in your repository root called <code>.config</code> which contains
+the .NET tool manifest <code>dotnet-tools.json</code>. By restoring the tools in the repository root,
+we can run them without installing anything globally on our computer. Make sure that this
+folder is not excluded in your <em>.gitignore</em> file.</p>
+<pre><code># Restore tools
+&gt; dotnet tool restore
+
+# Run cake
+&gt; dotnet cake
+
+# Run minver
+&gt; dotnet minver
+</code></pre>
+<h2 id="the-github-actions-yaml">The GitHub Actions YAML</h2>
+<p>Now let us create our GitHub Actions YAML file that describes how to bootstrap
+our build process.</p>
+<pre><code class="language-yaml">name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    if: &quot;!contains(github.event.head_commit.message, 'skip-ci')&quot;
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout&#64;v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet&#64;v1
+        with:
+          dotnet-version: 3.1.200
+
+      - name: Build
+        shell: bash
+        env:
+            NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+            DOTNET_CLI_TELEMETRY_OPTOUT: true
+        run: |
+          # Restore .NET tools
+          dotnet tool restore
+
+          # Get the version number
+          VERSION=$(dotnet minver -t v -v e -d preview)
+
+          # Run the build script
+          dotnet cake --target=&quot;Publish&quot; --buildversion=&quot;$VERSION&quot; 
+</code></pre>
+<p>Nothing super complicated going on there. On every commit to <em>main</em>,
+unless the commit message contains the text <code>skip-ci</code>, we do the following
+in bash on an Ubuntu image:</p>
+<ol>
+<li>Check out the code.</li>
+<li>Install the .NET Core SDK</li>
+<li>Restore the .NET tools</li>
+<li>Get the version number from <em>MinVer</em> and store it in a variable</li>
+<li>Pass the version number to the <em>Cake</em> build script as an argument and run
+the <em>Publish</em> target.</li>
+</ol>
+<h2 id="the-build-script">The build script</h2>
+<p>Our build script which we save as <code>build.cake</code> in the repository root
+looks like something like this:</p>
+<pre><code class=""><span class="token keyword roslyn-preprocessor-keyword">#</span><span class="token keyword roslyn-preprocessor-keyword">tool</span> <span class="token preprocessor-text roslyn-preprocessor-text">"nuget:?package=NuGet.CommandLine&version=5.5.1"</span>
+
+<span class="token comment roslyn-comment">// Get the version argument and if none is provided, use 0.0.1.</span>
+<span class="token comment roslyn-comment">// This is just for demonstrational purposes, you probably want to</span>
+<span class="token comment roslyn-comment">// abort if publishing without providing a version number.</span>
+<span class="token keyword roslyn-keyword">var</span> <span class="token variable roslyn-local-name">semanticVersion</span> <span class="token operator roslyn-operator">=</span> <span class="token symbol roslyn-identifier">Argument</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"buildversion"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token string roslyn-string">"0.0.1"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+<span class="token keyword roslyn-keyword">var</span> <span class="token variable roslyn-local-name">version</span> <span class="token operator roslyn-operator">=</span> <span class="token variable roslyn-local-name">semanticVersion</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Split</span><span class="token punctuation roslyn-punctuation">(</span><span class="token keyword roslyn-keyword">new</span> <span class="token keyword roslyn-keyword">char</span><span class="token punctuation roslyn-punctuation">[</span><span class="token punctuation roslyn-punctuation">]</span> <span class="token punctuation roslyn-punctuation">{</span> <span class="token string roslyn-string">'-'</span> <span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">FirstOrDefault</span><span class="token punctuation roslyn-punctuation">(</span><span class="token punctuation roslyn-punctuation">)</span> <span class="token operator roslyn-operator">??</span> <span class="token variable roslyn-local-name">semanticVersion</span><span class="token punctuation roslyn-punctuation">;</span>
+
+<span class="token symbol roslyn-identifier">Task</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"Clean"</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Does</span><span class="token punctuation roslyn-punctuation">(</span><span class="token property roslyn-parameter-name">context</span> <span class="token operator roslyn-operator">=></span> 
+<span class="token punctuation roslyn-punctuation">{</span>
+    <span class="token symbol roslyn-identifier">CleanDirectory</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"./.artifacts"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+<span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+
+<span class="token symbol roslyn-identifier">Task</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"Build"</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">IsDependentOn</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"Clean"</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Does</span><span class="token punctuation roslyn-punctuation">(</span><span class="token property roslyn-parameter-name">context</span> <span class="token operator roslyn-operator">=></span> 
+<span class="token punctuation roslyn-punctuation">{</span>
+    <span class="token symbol roslyn-identifier">DotNetCoreBuild</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"./src/MyProject.sln"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token keyword roslyn-keyword">new</span> <span class="token symbol roslyn-identifier">DotNetCoreBuildSettings</span> <span class="token punctuation roslyn-punctuation">{</span>
+        <span class="token symbol roslyn-identifier">Configuration</span> <span class="token operator roslyn-operator">=</span> <span class="token string roslyn-string">"Release"</span><span class="token punctuation roslyn-punctuation">,</span>
+        <span class="token symbol roslyn-identifier">NoIncremental</span> <span class="token operator roslyn-operator">=</span> <span class="token keyword roslyn-keyword">true</span><span class="token punctuation roslyn-punctuation">,</span>
+        <span class="token symbol roslyn-identifier">MSBuildSettings</span> <span class="token operator roslyn-operator">=</span> <span class="token keyword roslyn-keyword">new</span> <span class="token symbol roslyn-identifier">DotNetCoreMSBuildSettings</span><span class="token punctuation roslyn-punctuation">(</span><span class="token punctuation roslyn-punctuation">)</span>
+            <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">WithProperty</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"Version"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token variable roslyn-local-name">version</span><span class="token punctuation roslyn-punctuation">)</span>
+            <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">WithProperty</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"AssemblyVersion"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token variable roslyn-local-name">version</span><span class="token punctuation roslyn-punctuation">)</span>
+            <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">WithProperty</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"FileVersion"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token variable roslyn-local-name">version</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+<span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+
+<span class="token symbol roslyn-identifier">Task</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"Publish"</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">IsDependentOn</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"Build"</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Does</span><span class="token punctuation roslyn-punctuation">(</span><span class="token property roslyn-parameter-name">context</span> <span class="token operator roslyn-operator">=></span> 
+<span class="token punctuation roslyn-punctuation">{</span>
+    <span class="token comment roslyn-comment">// Make sure that there is an API key.</span>
+    <span class="token keyword roslyn-keyword">var</span> <span class="token variable roslyn-local-name">apiKey</span> <span class="token operator roslyn-operator">=</span>  <span class="token property roslyn-parameter-name">context</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">EnvironmentVariable</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"NUGET_API_KEY"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+    <span class="token keyword roslyn-keyword---control">if</span> <span class="token punctuation roslyn-punctuation">(</span><span class="token keyword roslyn-keyword">string</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">IsNullOrWhiteSpace</span><span class="token punctuation roslyn-punctuation">(</span><span class="token variable roslyn-local-name">apiKey</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">)</span> <span class="token punctuation roslyn-punctuation">{</span>
+        <span class="token keyword roslyn-keyword---control">throw</span> <span class="token keyword roslyn-keyword">new</span> <span class="token symbol roslyn-identifier">CakeException</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"No NuGet API key specified."</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+    <span class="token punctuation roslyn-punctuation">}</span>
+
+    <span class="token comment roslyn-comment">// Pack all projects</span>
+    <span class="token property roslyn-parameter-name">context</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">DotNetCorePack</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">$"</span><span class="token string roslyn-string">./src/MyProject.sln</span><span class="token string roslyn-string">"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token keyword roslyn-keyword">new</span> <span class="token symbol roslyn-identifier">DotNetCorePackSettings</span> <span class="token punctuation roslyn-punctuation">{</span>
+        <span class="token symbol roslyn-identifier">Configuration</span> <span class="token operator roslyn-operator">=</span> <span class="token string roslyn-string">"Release"</span><span class="token punctuation roslyn-punctuation">,</span>
+        <span class="token symbol roslyn-identifier">OutputDirectory</span> <span class="token operator roslyn-operator">=</span> <span class="token string roslyn-string">"./.artifacts"</span><span class="token punctuation roslyn-punctuation">,</span>
+        <span class="token symbol roslyn-identifier">NoBuild</span> <span class="token operator roslyn-operator">=</span> <span class="token keyword roslyn-keyword">true</span><span class="token punctuation roslyn-punctuation">,</span>
+        <span class="token symbol roslyn-identifier">MSBuildSettings</span> <span class="token operator roslyn-operator">=</span> <span class="token keyword roslyn-keyword">new</span> <span class="token symbol roslyn-identifier">DotNetCoreMSBuildSettings</span><span class="token punctuation roslyn-punctuation">(</span><span class="token punctuation roslyn-punctuation">)</span>
+            <span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">WithProperty</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"PackageVersion"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token variable roslyn-local-name">semanticVersion</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+
+    <span class="token comment roslyn-comment">// Publish all projects</span>
+    <span class="token keyword roslyn-keyword---control">foreach</span><span class="token punctuation roslyn-punctuation">(</span><span class="token keyword roslyn-keyword">var</span> <span class="token variable roslyn-local-name">file</span> <span class="token keyword roslyn-keyword---control">in</span> <span class="token symbol roslyn-identifier">GetFiles</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"./.artifacts/*.nupkg"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">)</span>
+    <span class="token punctuation roslyn-punctuation">{</span>
+        <span class="token property roslyn-parameter-name">context</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Information</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"Publishing {0}..."</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token variable roslyn-local-name">file</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Path</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">GetFilename</span><span class="token punctuation roslyn-punctuation">(</span><span class="token punctuation roslyn-punctuation">)</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">FullPath</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+        <span class="token property roslyn-parameter-name">context</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">NuGetPush</span><span class="token punctuation roslyn-punctuation">(</span><span class="token variable roslyn-local-name">file</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token keyword roslyn-keyword">new</span> <span class="token symbol roslyn-identifier">NuGetPushSettings</span> <span class="token punctuation roslyn-punctuation">{</span>
+            <span class="token symbol roslyn-identifier">ApiKey</span> <span class="token operator roslyn-operator">=</span> <span class="token variable roslyn-local-name">apiKey</span><span class="token punctuation roslyn-punctuation">,</span>
+            <span class="token symbol roslyn-identifier">Source</span> <span class="token operator roslyn-operator">=</span> <span class="token string roslyn-string">"https://api.nuget.org/v3/index.json"</span>
+        <span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+    <span class="token punctuation roslyn-punctuation">}</span>
+<span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+
+<span class="token symbol roslyn-identifier">RunTarget</span><span class="token punctuation roslyn-punctuation">(</span><span class="token symbol roslyn-identifier">Argument</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"target"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token string roslyn-string">"Build"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">)</span>
+</code></pre>
+<p>You would probably want to do a lot of other stuff there as well such
+as running tests and separating packing from publishing so you can get
+the packages without doing an actual publish, but this is just for
+demonstrational purposes. You could also call <em>MinVer</em> directly
+from your <em>Cake</em> script, or use it
+<a href="https://github.com/adamralph/minver#usage">in other ways</a>, but I
+like this approach since it's simple and easy to understand.</p>
+<p>Why not do everything in the GitHub Action, you might think? Well,
+I like to decouple my builds from the build server I'm using,
+making it possible to run the same build on my machine.</p>
+<h1 id="summary">Summary</h1>
+<p>In this blog post, I've described how to install local .NET tools whose
+definitions we store in the repository, creating GitHub YAML build definitions
+that is used to bootstrap our build process, and how to write and run a
+Cake build script which does the heavy lifting.</p>
+
+</article>
+
+
+</main>
+
+<footer>
+    <span class="mx-auto  text-base-800 dark:text-base-200 py-4 max-w-4xl block text-sm font-light text-center">
+        &copy; Patrik Svensson<br>
+        Blog design by <a class="text-blue-700 dark:text-blue-300" href="https://github.com/phil-scott-78/thirty25-statiq">Phil Scott</a> 
+        | Built with <a class="text-blue-700 dark:text-blue-300" href="https://statiq.dev/">Statiq</a>
+    </span>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js" integrity="sha512-pSVqGtpGygQlhN8ZTHXx1kqkjQr30eM+S6OoSzhHGTjh6DKdfy7WZlo1DNO9bhtM0Imf6xNLznZ7iVC2YUMwJQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha512-GP4x8UWxWyh4BMbyJGOGneiTbkrWEF5izsVJByzVLodP8CuJH/n936+yQDMJJrOPUHLgyPbLiGw2rXmdvGdXHA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+            function swapTheme(){
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                }                
+            }
+        </script>
+
+</body></html>

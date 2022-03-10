@@ -4,20 +4,20 @@
 		<title>Patrik Svensson</title>
 		<link>https://patriksvensson.se/</link>
 		<description>This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.</description>
-		<copyright>2021</copyright>
+		<copyright>2022</copyright>
 		<managingEditor>Patrik Svensson</managingEditor>
-		<pubDate>Wed, 22 Dec 2021 13:16:29 GMT</pubDate>
-		<lastBuildDate>Wed, 22 Dec 2021 13:16:29 GMT</lastBuildDate>
+		<pubDate>Thu, 10 Mar 2022 14:36:17 GMT</pubDate>
+		<lastBuildDate>Thu, 10 Mar 2022 14:36:17 GMT</lastBuildDate>
 		<item>
 			<title>Intellisense for your GitHub Actions workflows</title>
-			<link>https://patriksvensson.se/2021/12/intellisense-for-your-github-actions-workflows</link>
+			<link>https://patriksvensson.se/posts/2021/12/intellisense-for-your-github-action-workflows</link>
 			<description>&lt;p&gt;Although I'm a big fan of GitHub, I'm not a big fan of YAML.
 When it comes to orchestrating my builds, I usually prefer some kind
 of build script, but bootstrapping that build script is a necessary
 evil so we're stuck with YAML for that part.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2021/12/intellisense-for-your-github-actions-workflows</guid>
-			<pubDate>Wed, 22 Dec 2021 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2021/12/intellisense-for-your-github-action-workflows</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;Although I'm a big fan of GitHub, I'm not a big fan of YAML.
 When it comes to orchestrating my builds, I usually prefer some kind
 of build script, but bootstrapping that build script is a necessary
@@ -27,7 +27,7 @@ evil so we're stuck with YAML for that part.&lt;/p&gt;
 at &lt;a href="https://json.schemastore.org/github-workflow.json"&gt;json.schemastore.org&lt;/a&gt;,
 and that means that we can use
 &lt;a href="https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml"&gt;Red Hat's YAML VSCode extension&lt;/a&gt;.&lt;/p&gt;
-&lt;img src="/images/gh_workflow_schema.png" style="margin-bottom:30px"&gt;
+&lt;img src="gh_workflow_schema.png" style="margin-bottom:30px"&gt;
 &lt;p&gt;&lt;em&gt;&amp;quot;What does a JSON schema have to do with a VSCode YAML extension?&amp;quot;&lt;/em&gt; you
 might ask. Excellent question. It turns out that Red Hat's YAML extension
 has support for JSON schemas out of the box.&lt;/p&gt;
@@ -40,15 +40,130 @@ line to the top of your workflow file:&lt;/p&gt;
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
-			<title>Thank you Octopus Deploy!</title>
-			<link>https://patriksvensson.se/2020/10/thank-you-octopus-deploy</link>
-			<description>&lt;p&gt;&lt;em&gt;(This blog post was cross posted from &lt;a href="https://cakebuild.net/blog/2020/10/octopus-deploy"&gt;the Cake blog&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;</description>
+			<title>Enumerating monitors in Rust using Win32 API</title>
+			<link>https://patriksvensson.se/posts/2020/06/enumerating-monitors-in-rust-using-win32-api</link>
+			<description>&lt;p&gt;I had to enumerate all monitors yesterday using the
+&lt;a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors"&gt;EnumDisplayMonitors&lt;/a&gt;
+Win32 function, and I thought I would write a couple of lines about what I did since I couldn't find any useful
+information about how to do this.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2020/10/thank-you-octopus-deploy</guid>
-			<pubDate>Thu, 08 Oct 2020 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;&lt;em&gt;(This blog post was cross posted from &lt;a href="https://cakebuild.net/blog/2020/10/octopus-deploy"&gt;the Cake blog&lt;/a&gt;)&lt;/em&gt;&lt;/p&gt;
-&lt;h2 id="some-background"&gt;Some background&lt;/h2&gt;
-&lt;p&gt;When I started working on Cake in 2014, I did it to scratch an itch I had. &lt;a href="https://fake.build/"&gt;FAKE&lt;/a&gt; existed (which has been a tremendous initial inspiration), but I didn't know F# enough (at all) to be confident enough to bet our build process on it.&lt;/p&gt;
+			<guid>https://patriksvensson.se/posts/2020/06/enumerating-monitors-in-rust-using-win32-api</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;I had to enumerate all monitors yesterday using the
+&lt;a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors"&gt;EnumDisplayMonitors&lt;/a&gt;
+Win32 function, and I thought I would write a couple of lines about what I did since I couldn't find any useful
+information about how to do this.&lt;/p&gt;
+&lt;h2 id="import-the-winapi-crate"&gt;Import the winapi crate&lt;/h2&gt;
+&lt;p&gt;First, we need to import the &lt;a href="https://docs.rs/winapi/0.3.8/winapi/index.html"&gt;winapi crate&lt;/a&gt;.
+We could of course define all Win32 &lt;a href="https://doc.rust-lang.org/nomicon/ffi.html"&gt;FFI&lt;/a&gt; calls ourselves,
+but this saves us a lot of keystrokes and make our lives easier.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-toml"&gt;[dependencies]
+winapi = { version = &amp;quot;0.3.6&amp;quot;, features = [&amp;quot;winuser&amp;quot;] }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="enumerating-the-monitors"&gt;Enumerating the monitors&lt;/h2&gt;
+&lt;p&gt;With the winapi crate in place, we can start writing the code. I won't go into details about it,
+but it should show a couple of things.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;How to use unsafe code&lt;/li&gt;
+&lt;li&gt;How to define a callback from an FFI function&lt;/li&gt;
+&lt;li&gt;How to convert &lt;a href="https://docs.rs/winapi/0.3.8/winapi/um/winnt/type.WCHAR.html"&gt;WCHAR&lt;/a&gt;
+(a &lt;a href="https://doc.rust-lang.org/std/u16/index.html"&gt;u16&lt;/a&gt; type alias)
+to &lt;a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html"&gt;OsString&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;How to convert from &lt;a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html"&gt;OsString&lt;/a&gt;
+to &lt;a href="https://doc.rust-lang.org/std/primitive.str.html"&gt;&amp;amp;str&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;How to cast to &lt;code&gt;*mut _&lt;/code&gt; (a type placeholder) when we want Rust to figure out the type.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre&gt;&lt;code class="language-rust"&gt;use std::ffi::OsString;
+use std::io::Error;
+use std::mem;
+use std::ptr;
+use std::os::windows::ffi::OsStringExt;
+
+use winapi::shared::minwindef::{LPARAM, TRUE, BOOL};
+use winapi::shared::windef::{HMONITOR, HDC, LPRECT, RECT};
+use winapi::um::winuser::{EnumDisplayMonitors, GetMonitorInfoW, MONITORINFOEXW};
+
+fn main() {
+    for monitor in enumerate_monitors() {
+        // Convert the WCHAR[] to a unicode OsString
+        let name = match &amp;amp;monitor.szDevice[..].iter().position(|c| *c == 0) {
+            Some(len) =&amp;gt; OsString::from_wide(&amp;amp;monitor.szDevice[0..*len]),
+            None =&amp;gt; OsString::from_wide(&amp;amp;monitor.szDevice[0..monitor.szDevice.len()]),
+        };
+
+        // Print some information to the console
+        println!(&amp;quot;Display name = {}&amp;quot;, name.to_str().unwrap());
+        println!(&amp;quot;    Left: {}&amp;quot;, monitor.rcWork.left);
+        println!(&amp;quot;   Right: {}&amp;quot;, monitor.rcWork.right);
+        println!(&amp;quot;     Top: {}&amp;quot;, monitor.rcWork.top);
+        println!(&amp;quot;  Bottom: {}&amp;quot;, monitor.rcWork.bottom);
+    }
+}
+
+///////////////////////////////////////////////////////////////
+// The method that numerates all monitors
+
+fn enumerate_monitors() -&amp;gt; Vec&amp;lt;MONITORINFOEXW&amp;gt; {
+    // Define the vector where we will store the result
+    let mut monitors = Vec::&amp;lt;MONITORINFOEXW&amp;gt;::new();
+    let userdata = &amp;amp;mut monitors as *mut _;
+
+    let result = unsafe {
+        EnumDisplayMonitors(
+            ptr::null_mut(),
+            ptr::null(),
+            Some(enumerate_monitors_callback),
+            userdata as LPARAM,
+        )
+    };
+
+    if result != TRUE {
+        // Get the last error for the current thread.
+        // This is analogous to calling the Win32 API GetLastError.
+        panic!(&amp;quot;Could not enumerate monitors: {}&amp;quot;, Error::last_os_error());
+    }
+
+    monitors
+}
+
+///////////////////////////////////////////////////////////////
+// The callback from EnumDisplayMonitors
+
+unsafe extern &amp;quot;system&amp;quot; fn enumerate_monitors_callback(
+    monitor: HMONITOR,
+    _: HDC,
+    _: LPRECT,
+    userdata: LPARAM,
+) -&amp;gt; BOOL {
+    // Get the userdata where we will store the result
+    let monitors: &amp;amp;mut Vec&amp;lt;MONITORINFOEXW&amp;gt; = mem::transmute(userdata);
+
+    // Initialize the MONITORINFOEXW structure and get a pointer to it
+    let mut monitor_info: MONITORINFOEXW = mem::zeroed();
+    monitor_info.cbSize = mem::size_of::&amp;lt;MONITORINFOEXW&amp;gt;() as u32;
+    let monitor_info_ptr = &amp;lt;*mut _&amp;gt;::cast(&amp;amp;mut monitor_info);
+
+    // Call the GetMonitorInfoW win32 API
+    let result = GetMonitorInfoW(monitor, monitor_info_ptr);
+    if result == TRUE {
+        // Push the information we received to userdata
+        monitors.push(monitor_info);
+    }
+
+    TRUE
+}
+&lt;/code&gt;&lt;/pre&gt;
+</content:encoded>
+			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
+		</item>
+		<item>
+			<title>Thank you Octopus Deploy!</title>
+			<link>https://patriksvensson.se/posts/2020/10/thank-you-octopus-deploy</link>
+			<description>&lt;p&gt;When I started working on Cake in 2014, I did it to scratch an itch I had. &lt;a href="https://fake.build/"&gt;FAKE&lt;/a&gt; existed (which has been a tremendous initial inspiration), but I didn't know F# enough (at all) to be confident enough to bet our build process on it.&lt;/p&gt;</description>
+			<author>Patrik Svensson</author>
+			<guid>https://patriksvensson.se/posts/2020/10/thank-you-octopus-deploy</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;When I started working on Cake in 2014, I did it to scratch an itch I had. &lt;a href="https://fake.build/"&gt;FAKE&lt;/a&gt; existed (which has been a tremendous initial inspiration), but I didn't know F# enough (at all) to be confident enough to bet our build process on it.&lt;/p&gt;
 &lt;p&gt;A lot has happened since then; .NET has changed, and so has Cake. We've moved from a separate &lt;em&gt;Roslyn&lt;/em&gt; and &lt;em&gt;Mono&lt;/em&gt; engine to a unified one based on &lt;em&gt;Roslyn&lt;/em&gt;. We've added support for &lt;em&gt;C# 6&lt;/em&gt;, &lt;em&gt;7&lt;/em&gt;, &lt;em&gt;8&lt;/em&gt;, and just recently &lt;em&gt;9&lt;/em&gt;. In addition to &lt;em&gt;.NET Framework&lt;/em&gt;, we've added support for every version of &lt;em&gt;.NET Core&lt;/em&gt;, from the early beta to .NET 5. The project has also gone from a single maintainer to nine, which I think is the biggest reason for its success.&lt;/p&gt;
 &lt;p&gt;We keep a close eye on statistics. Not only is it satisfying seeing the numbers go up, but it's also an indicator that people and companies still use our little project. Cake in its different incarnations has been downloaded over 12 million times and is the &lt;a href="https://www.nuget.org/packages?packagetype=dotnettool&amp;amp;sortby=totalDownloads-desc&amp;amp;q=&amp;amp;prerel=True"&gt;third most downloaded dotnet tool&lt;/a&gt; on &lt;em&gt;NuGet&lt;/em&gt;. Build tools don't often get credit as libraries do, but we know that some big companies like &lt;a href="https://www.microsoft.com/"&gt;Microsoft&lt;/a&gt; and &lt;a href="https://github.com/"&gt;GitHub&lt;/a&gt; use Cake in their build process. However, no company has ever reached out to us about &lt;a href="https://opencollective.com/cake"&gt;sponsoring us&lt;/a&gt; in any way. That is until a couple of weeks ago.&lt;/p&gt;
 &lt;h2 id="getting-our-first-sponsor"&gt;Getting our first sponsor&lt;/h2&gt;
@@ -57,19 +172,18 @@ line to the top of your workflow file:&lt;/p&gt;
 &lt;p&gt;I'm not saying that your company should sponsor Cake, but you should take a moment, reflect on what projects you depend on, &lt;a href="https://opencollective.com/cake"&gt;and try to make sure that those projects stay around&lt;/a&gt;.&lt;/p&gt;
 &lt;h2 id="summary"&gt;Summary&lt;/h2&gt;
 &lt;p&gt;To put it short, companies like &lt;em&gt;Octopus Deploy&lt;/em&gt;, that sponsor projects that they depend on, &lt;strong&gt;make open source sustainable&lt;/strong&gt;, and I want to say a personal &lt;strong&gt;thank you&lt;/strong&gt; to them for doing it!&lt;/p&gt;
-&lt;hr /&gt;
 &lt;p&gt;You should check them out if you haven't already: &lt;a href="https://octopus.com/"&gt;https://octopus.com&lt;/a&gt;&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
 			<title>Deploying to NuGet from GitHub Actions using Cake and MinVer</title>
-			<link>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</link>
+			<link>https://patriksvensson.se/posts/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</link>
 			<description>&lt;p&gt;I recently started moving some builds from TeamCity, Travis, and AppVeyor to GitHub actions,
 and while doing that, I thought I would also move to a more straightforward deployment process.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</guid>
-			<pubDate>Mon, 22 Jun 2020 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2020/06/deploying-to-nuget-from-github-actions-using-cake-and-minver</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;I recently started moving some builds from TeamCity, Travis, and AppVeyor to GitHub actions,
 and while doing that, I thought I would also move to a more straightforward deployment process.&lt;/p&gt;
 &lt;p&gt;Before, I used to push to NuGet by tagging the main branch, and while this is a perfectly reasonable
@@ -233,330 +347,14 @@ Cake build script which does the heavy lifting.&lt;/p&gt;
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
-			<title>Enumerating monitors in Rust using Win32 API</title>
-			<link>https://patriksvensson.se/2020/06/enumerating-monitors-in-rust-using-win32-api</link>
-			<description>&lt;p&gt;I had to enumerate all monitors yesterday using the
-&lt;a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors"&gt;EnumDisplayMonitors&lt;/a&gt;
-Win32 function, and I thought I would write a couple of lines about what I did since I couldn't find any useful
-information about how to do this.&lt;/p&gt;</description>
-			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2020/06/enumerating-monitors-in-rust-using-win32-api</guid>
-			<pubDate>Mon, 08 Jun 2020 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;I had to enumerate all monitors yesterday using the
-&lt;a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaymonitors"&gt;EnumDisplayMonitors&lt;/a&gt;
-Win32 function, and I thought I would write a couple of lines about what I did since I couldn't find any useful
-information about how to do this.&lt;/p&gt;
-&lt;h2 id="import-the-winapi-crate"&gt;Import the winapi crate&lt;/h2&gt;
-&lt;p&gt;First, we need to import the &lt;a href="https://docs.rs/winapi/0.3.8/winapi/index.html"&gt;winapi crate&lt;/a&gt;.
-We could of course define all Win32 &lt;a href="https://doc.rust-lang.org/nomicon/ffi.html"&gt;FFI&lt;/a&gt; calls ourselves,
-but this saves us a lot of keystrokes and make our lives easier.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-toml"&gt;[dependencies]
-winapi = { version = &amp;quot;0.3.6&amp;quot;, features = [&amp;quot;winuser&amp;quot;] }
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="enumerating-the-monitors"&gt;Enumerating the monitors&lt;/h2&gt;
-&lt;p&gt;With the winapi crate in place, we can start writing the code. I won't go into details about it,
-but it should show a couple of things.&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;How to use unsafe code&lt;/li&gt;
-&lt;li&gt;How to define a callback from an FFI function&lt;/li&gt;
-&lt;li&gt;How to convert &lt;a href="https://docs.rs/winapi/0.3.8/winapi/um/winnt/type.WCHAR.html"&gt;WCHAR&lt;/a&gt;
-(a &lt;a href="https://doc.rust-lang.org/std/u16/index.html"&gt;u16&lt;/a&gt; type alias)
-to &lt;a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html"&gt;OsString&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;How to convert from &lt;a href="https://doc.rust-lang.org/std/ffi/struct.OsString.html"&gt;OsString&lt;/a&gt;
-to &lt;a href="https://doc.rust-lang.org/std/primitive.str.html"&gt;&amp;amp;str&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;How to cast to &lt;code&gt;*mut _&lt;/code&gt; (a type placeholder) when we want Rust to figure out the type.&lt;/li&gt;
-&lt;/ol&gt;
-&lt;pre&gt;&lt;code class="language-rust"&gt;use std::ffi::OsString;
-use std::io::Error;
-use std::mem;
-use std::ptr;
-use std::os::windows::ffi::OsStringExt;
-
-use winapi::shared::minwindef::{LPARAM, TRUE, BOOL};
-use winapi::shared::windef::{HMONITOR, HDC, LPRECT, RECT};
-use winapi::um::winuser::{EnumDisplayMonitors, GetMonitorInfoW, MONITORINFOEXW};
-
-fn main() {
-    for monitor in enumerate_monitors() {
-        // Convert the WCHAR[] to a unicode OsString
-        let name = match &amp;amp;monitor.szDevice[..].iter().position(|c| *c == 0) {
-            Some(len) =&amp;gt; OsString::from_wide(&amp;amp;monitor.szDevice[0..*len]),
-            None =&amp;gt; OsString::from_wide(&amp;amp;monitor.szDevice[0..monitor.szDevice.len()]),
-        };
-
-        // Print some information to the console
-        println!(&amp;quot;Display name = {}&amp;quot;, name.to_str().unwrap());
-        println!(&amp;quot;    Left: {}&amp;quot;, monitor.rcWork.left);
-        println!(&amp;quot;   Right: {}&amp;quot;, monitor.rcWork.right);
-        println!(&amp;quot;     Top: {}&amp;quot;, monitor.rcWork.top);
-        println!(&amp;quot;  Bottom: {}&amp;quot;, monitor.rcWork.bottom);
-    }
-}
-
-///////////////////////////////////////////////////////////////
-// The method that numerates all monitors
-
-fn enumerate_monitors() -&amp;gt; Vec&amp;lt;MONITORINFOEXW&amp;gt; {
-    // Define the vector where we will store the result
-    let mut monitors = Vec::&amp;lt;MONITORINFOEXW&amp;gt;::new();
-    let userdata = &amp;amp;mut monitors as *mut _;
-
-    let result = unsafe {
-        EnumDisplayMonitors(
-            ptr::null_mut(),
-            ptr::null(),
-            Some(enumerate_monitors_callback),
-            userdata as LPARAM,
-        )
-    };
-
-    if result != TRUE {
-        // Get the last error for the current thread.
-        // This is analogous to calling the Win32 API GetLastError.
-        panic!(&amp;quot;Could not enumerate monitors: {}&amp;quot;, Error::last_os_error());
-    }
-
-    monitors
-}
-
-///////////////////////////////////////////////////////////////
-// The callback from EnumDisplayMonitors
-
-unsafe extern &amp;quot;system&amp;quot; fn enumerate_monitors_callback(
-    monitor: HMONITOR,
-    _: HDC,
-    _: LPRECT,
-    userdata: LPARAM,
-) -&amp;gt; BOOL {
-    // Get the userdata where we will store the result
-    let monitors: &amp;amp;mut Vec&amp;lt;MONITORINFOEXW&amp;gt; = mem::transmute(userdata);
-
-    // Initialize the MONITORINFOEXW structure and get a pointer to it
-    let mut monitor_info: MONITORINFOEXW = mem::zeroed();
-    monitor_info.cbSize = mem::size_of::&amp;lt;MONITORINFOEXW&amp;gt;() as u32;
-    let monitor_info_ptr = &amp;lt;*mut _&amp;gt;::cast(&amp;amp;mut monitor_info);
-
-    // Call the GetMonitorInfoW win32 API
-    let result = GetMonitorInfoW(monitor, monitor_info_ptr);
-    if result == TRUE {
-        // Push the information we received to userdata
-        monitors.push(monitor_info);
-    }
-
-    TRUE
-}
-&lt;/code&gt;&lt;/pre&gt;
-</content:encoded>
-			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
-		</item>
-		<item>
-			<title>Targeting ARM64 for Windows in Rust</title>
-			<link>https://patriksvensson.se/2020/05/targeting-arm-for-windows-in-rust</link>
-			<description>&lt;p&gt;I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
-ARM64 device the other day. My initial thought when I got the idea, was
-&amp;amp;quot;I hope it's not complicated to do&amp;amp;quot;.&lt;/p&gt;
-&lt;p&gt;TLDR; it wasn't.&lt;/p&gt;</description>
-			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2020/05/targeting-arm-for-windows-in-rust</guid>
-			<pubDate>Tue, 26 May 2020 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
-ARM64 device the other day. My initial thought when I got the idea, was
-&amp;quot;I hope it's not complicated to do&amp;quot;.&lt;/p&gt;
-&lt;p&gt;TLDR; it wasn't.&lt;/p&gt;
-&lt;!--excerpt--&gt;
-&lt;h2 id="toolchain-targets"&gt;Toolchain targets&lt;/h2&gt;
-&lt;p&gt;One thing to be aware of is that ARM64, or &lt;code&gt;aarch64-pc-windows-msvc&lt;/code&gt; as the toolchain
-target is known as, is that it belongs in &lt;code&gt;tier 2&lt;/code&gt; of Rust's platform support.&lt;/p&gt;
-&lt;p&gt;While tier 1 is &amp;quot;&lt;em&gt;Guaranteed to run&lt;/em&gt;&amp;quot;, tier 2 is only &amp;quot;&lt;em&gt;Guaranteed to build&lt;/em&gt;&amp;quot;.&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;Tier 2 platforms can be thought of as &amp;quot;guaranteed to build&amp;quot;. Automated tests
-are not run, so it's not guaranteed to produce a working build, but platforms often work to quite a good degree [...]&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;So what do the different parts in the toolchain target name mean?&lt;/p&gt;
-&lt;table&gt;
-  &lt;tbody&gt;
-  &lt;tr&gt;
-    &lt;td&gt;&lt;code&gt;aarch64&lt;/code&gt;&lt;/td&gt;
-    &lt;td&gt;This is the platform architecture we're targeting, in this case, ARM64.&lt;/td&gt;
-  &lt;/tr&gt;
-  &lt;tr&gt;
-    &lt;td&gt;&lt;code&gt;pc-windows&lt;/code&gt;&lt;/td&gt;
-    &lt;td&gt;This is the operating system we're targeting, in this case, Windows.&lt;/td&gt;
-  &lt;/tr&gt;
-  &lt;tr&gt;
-    &lt;td&gt;&lt;code&gt;msvc&lt;/code&gt;&lt;/td&gt;
-    &lt;td&gt;This is the compiler we want to use. MSVC is an abbreviation of "Microsoft Visual C++".&lt;/td&gt;
-  &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;If you're interested in reading more about the different supported platforms
-in Rust, you can find the full list over at&lt;br /&gt;
-&lt;a href="https://forge.rust-lang.org/release/platform-support.html"&gt;https://forge.rust-lang.org/release/platform-support.html&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id="installing-the-toolchain-target"&gt;Installing the toolchain target&lt;/h2&gt;
-&lt;p&gt;Rust supports cross-compilation, so there's no need to build our ARM64 app on an
-ARM64 machine, and even if we wanted to, it would prove difficult since essential
-tools like &lt;a href="https://doc.rust-lang.org/cargo/"&gt;Cargo&lt;/a&gt; isn't available for ARM64 on
-Windows. The only prerequisite for cross-compiling is a compiler
-that can target the desired platform and all the necessary dependencies
-required to compile the code.&lt;/p&gt;
-&lt;p&gt;To compile our application for ARM64, we need to install the
-&lt;code&gt;aarch64-pc-windows-msvc&lt;/code&gt; target for our Rust compiler toolchain.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; rustup target install aarch64-pc-windows-msvc
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;If you want to see what toolchain targets are available or installed, you can
-use the &lt;code&gt;rustup target list&lt;/code&gt; command.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;&amp;gt; rustup target list
-aarch64-apple-ios
-aarch64-fuchsia
-aarch64-linux-android
-aarch64-pc-windows-msvc (installed)
-aarch64-unknown-linux-gnu
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="building-for-arm64"&gt;Building for ARM64&lt;/h2&gt;
-&lt;p&gt;Now when the correct toolchain target has been installed, let's go ahead and
-create a new binary and build it with our newly installed target.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; cargo build --target=aarch64-pc-windows-msvc
-   Compiling helloworld v0.1.0 (D:\Source\local\helloworld)
-    Finished dev [unoptimized + debuginfo] target(s) in 0.36s
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h3 id="automatically-build-with-a-specific-target"&gt;Automatically build with a specific target&lt;/h3&gt;
-&lt;p&gt;If you always want to build for this target, you can create&lt;code&gt;.cargo/config&lt;/code&gt;
-in your repository root and add the following contents to it:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-toml"&gt;[build]
-target = &amp;quot;aarch64-pc-windows-msvc&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="running-on-an-arm64-machine"&gt;Running on an ARM64 machine&lt;/h2&gt;
-&lt;p&gt;Everything compiled! Not a big surprise, it's &amp;quot;Guaranteed to build&amp;quot; after all,
-but it felt good anyway. Time to test it out on an actual ARM64 machine.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; ./helloworld.exe
--1073741515
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h3 id="oh-noes"&gt;Oh noes&lt;/h3&gt;
-&lt;p&gt;The application exited with the error code &lt;code&gt;-1073741515&lt;/code&gt;,
-more famously known as &lt;code&gt;0xC0000135&lt;/code&gt;, which is Windows' way of telling us that
-an essential component is missing. It turns out that we need to install the
-&lt;a href="https://aka.ms/vs/16/release/VC_redist.arm64.exe"&gt;&lt;em&gt;Microsoft Visual C++ Redistributable for Visual Studio 2019&lt;/em&gt;&lt;/a&gt;
-for ARM64.&lt;/p&gt;
-&lt;p&gt;Installing the MSVC redistributable and rerunning our app
-now produces the expected output.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; ./helloworld.exe
-Hello World
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
-&lt;p&gt;Not super complicated stuff, but hopefully this post has been useful for you if you
-wanted to learn more about Rust's different platform tiers, toolchain targets, and cross-compilation.&lt;/p&gt;
-</content:encoded>
-			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
-		</item>
-		<item>
-			<title>How to create .NET Core release artifacts with GitHub Actions</title>
-			<link>https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions</link>
-			<description>&lt;p&gt;In this blog post, we'll create a &lt;a href="https://github.com/features/actions"&gt;GitHub Action&lt;/a&gt; that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.&lt;/p&gt;</description>
-			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2020/03/creating-release-artifacts-with-github-actions</guid>
-			<pubDate>Sun, 22 Mar 2020 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;In this blog post, we'll create a &lt;a href="https://github.com/features/actions"&gt;GitHub Action&lt;/a&gt; that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.&lt;/p&gt;
-&lt;!--excerpt--&gt;
-&lt;p&gt;There's a myriad of ways of doing this, but this has so far worked out great for me.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/gh_assets.png" alt="A GitHub release with artifacts"&gt;&lt;/p&gt;
-&lt;p&gt;For this blog post, I've created a .NET Core 3.1 console application whose only purpose is to write "Hello World" to the console. It's this application we build and package when we create a new GitHub release, and the source code can be found at &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src"&gt;https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src&lt;/a&gt;&lt;/p&gt;
-&lt;h2 id="create-the-github-action"&gt;1. Create the GitHub Action&lt;/h2&gt;
-&lt;p&gt;We start by creating a new &lt;a href="https://help.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#creating-a-workflow-file"&gt;workflow file&lt;/a&gt; under &lt;code&gt;.github/workflows&lt;/code&gt; in the repository. We call this &lt;code&gt;ci.yaml&lt;/code&gt;, but you can name this anything you want as long as it's a YAML file. We then proceed to tell GitHub that we want this workflow to run every time we publish a new release.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-yaml"&gt;name: Publish
-on:
-  release:
-    types: [published]
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id="define-the-build-strategy"&gt;2. Define the build strategy&lt;/h2&gt;
-&lt;p&gt;Now we want to add a job, which we'll call &lt;code&gt;Release&lt;/code&gt;, and define a build strategy. We'll use a &lt;a href="https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstrategy"&gt;matrix&lt;/a&gt; with all the information we need for our different builds, such as what build agent we want to use for each element in the matrix, and what runtime to target.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-yaml"&gt;jobs:
-  release:
-    name: Release
-    strategy:
-      matrix:
-        kind: ['linux', 'windows', 'macOS']
-        include:
-          - kind: linux
-            os: ubuntu-latest
-            target: linux-x64
-          - kind: windows
-            os: windows-latest
-            target: win-x64
-          - kind: macOS
-            os: macos-latest
-            target: osx-x64
-    runs-on: ${{ matrix.os }}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Notice that we reference the &lt;code&gt;os&lt;/code&gt; matrix metadata in the &lt;code&gt;runs-on&lt;/code&gt; node via &lt;code&gt;{{ matrix.os }}&lt;/code&gt;. You can reference any data defined in the matrix this way.&lt;/p&gt;
-&lt;p&gt;As you can see in the image below, the name of each step in the matrix will be a combination of the job name and the name of the matrix element.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/gh_job.png" alt="A GitHub Actions job"&gt;&lt;/p&gt;
-&lt;h2 id="build-package-and-publish"&gt;3. Build, package and publish&lt;/h2&gt;
-&lt;p&gt;Now when we've defined the workflow and the build matrix, we'll have to do four things.&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;Check out the code&lt;/li&gt;
-&lt;li&gt;Setup .NET Core and define what SDK we're going to use&lt;/li&gt;
-&lt;li&gt;Build our project and create the release artifacts&lt;/li&gt;
-&lt;li&gt;Publish the release artifacts&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;Let's start with the first two since there are already pre-made actions for these.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-yaml"&gt;    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 3.1.101
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Now when everything is in place, we need to build our artifacts and publish them. Since we want to be idiomatic on all platforms, we zip the artifacts on Windows and package them as &lt;code&gt;tar.gz&lt;/code&gt; on Linux and macOS.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-yaml"&gt;      - name: Build
-        shell: bash
-        run: |
-          # Define some variables for things we need
-          tag=$(git describe --tags --abbrev=0)
-          release_name="App-$tag-${{ matrix.target }}"
-
-          # Build everything
-          dotnet publish src/App/App.csproj --framework netcoreapp3.1 --runtime "${{ matrix.target }}" -c Release -o "$release_name"
-
-          # Pack files
-          if [ "${{ matrix.target }}" == "win-x64" ]; then
-            7z a -tzip "${release_name}.zip" "./${release_name}/*"
-          else
-            tar czvf "${release_name}.tar.gz" "$release_name"
-          fi
-
-          # Delete output directory
-          rm -r "$release_name"
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;You might have noticed that we run the build step in a Bash shell and wonder how that works on Windows (at least I did). The answer is that it runs under Git Bash and not under Windows Subsystem for Linux (WSL), as one might have thought.&lt;/p&gt;
-&lt;p&gt;Finally, once we've built and packaged everything up, we'll add the artifacts to our release. For this, we'll use &lt;a href="https://github.com/softprops/action-gh-release"&gt;softprops/action-gh-release&lt;/a&gt; GitHub Action, which I think works very well.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-yaml"&gt;      - name: Publish
-        uses: softprops/action-gh-release@v1
-        with:
-          files: "App*"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;That's all there is to it. If you want to create a release, all you have to do is create a new tag, go to the GitHub release page, and create a release from the newly created tag.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-shell"&gt;&amp;gt; git tag 1.0
-&amp;gt; git push --tags
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;You can find the complete YAML file &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/blob/master/.github/workflows/ci.yaml"&gt;here&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
-&lt;p&gt;As I've previously mentioned, there is a myriad of different ways of doing this. What I have described in this blog post is only one of them, but I've found that it has served me well and is reasonably easy to understand even if you're new to GitHub Actions.&lt;/p&gt;
-</content:encoded>
-			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
-		</item>
-		<item>
 			<title>How to write a stateful Roslyn analyzer</title>
-			<link>https://patriksvensson.se/2020/03/how-to-write-a-stateful-roslyn-analyzer</link>
+			<link>https://patriksvensson.se/posts/2020/03/how-to-write-a-stateful-roslyn-analyzer</link>
 			<description>&lt;p&gt;I wrote a stateful Roslyn analyzer a couple of days ago to analyze the codebase
 at work for irregularities, and I thought I would share my findings on how I did
 it.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2020/03/how-to-write-a-stateful-roslyn-analyzer</guid>
-			<pubDate>Sat, 07 Mar 2020 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2020/03/how-to-write-a-stateful-roslyn-analyzer</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;I wrote a stateful Roslyn analyzer a couple of days ago to analyze the codebase
 at work for irregularities, and I thought I would share my findings on how I did
 it.&lt;/p&gt;
@@ -765,29 +563,226 @@ outside of Visual Studio, you will have to
 improvements that could be done to this analyzer (both when it comes to
 performance and correctness), but I've tried to keep it as simple as possible
 for this blog post. I'll leave any improvements as an exercise to the reader. ;)&lt;/p&gt;
-&lt;p&gt;You can find the source code for the analyzer at
-&lt;a href="https://github.com/patriksvensson/stateful-roslyn-analyzer"&gt;https://github.com/patriksvensson/stateful-roslyn-analyzer&lt;/a&gt;.&lt;/p&gt;
+</content:encoded>
+			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
+		</item>
+		<item>
+			<title>Targeting ARM64 for Windows in Rust</title>
+			<link>https://patriksvensson.se/posts/2020/05/targeting-arm-for-windows-in-rust</link>
+			<description>&lt;p&gt;I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
+ARM64 device the other day. My initial thought when I got the idea, was
+&amp;quot;I hope it's not complicated to do&amp;quot;.&lt;/p&gt;
+&lt;p&gt;TLDR; it wasn't.&lt;/p&gt;</description>
+			<author>Patrik Svensson</author>
+			<guid>https://patriksvensson.se/posts/2020/05/targeting-arm-for-windows-in-rust</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;I wanted to run a thing I'm building with Rust on my Surface Pro X which is an
+ARM64 device the other day. My initial thought when I got the idea, was
+&amp;quot;I hope it's not complicated to do&amp;quot;.&lt;/p&gt;
+&lt;p&gt;TLDR; it wasn't.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;h2 id="toolchain-targets"&gt;Toolchain targets&lt;/h2&gt;
+&lt;p&gt;One thing to be aware of is that ARM64, or &lt;code&gt;aarch64-pc-windows-msvc&lt;/code&gt; as the toolchain
+target is known as, is that it belongs in &lt;code&gt;tier 2&lt;/code&gt; of Rust's platform support.&lt;/p&gt;
+&lt;p&gt;While tier 1 is &amp;quot;&lt;em&gt;Guaranteed to run&lt;/em&gt;&amp;quot;, tier 2 is only &amp;quot;&lt;em&gt;Guaranteed to build&lt;/em&gt;&amp;quot;.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Tier 2 platforms can be thought of as &amp;quot;guaranteed to build&amp;quot;. Automated tests
+are not run, so it's not guaranteed to produce a working build, but platforms often work to quite a good degree [...]&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;So what do the different parts in the toolchain target name mean?&lt;/p&gt;
+&lt;table&gt;
+  &lt;tbody&gt;
+  &lt;tr&gt;
+    &lt;td&gt;&lt;code&gt;aarch64&lt;/code&gt;&lt;/td&gt;
+    &lt;td&gt;This is the platform architecture we're targeting, in this case, ARM64.&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;&lt;code&gt;pc-windows&lt;/code&gt;&lt;/td&gt;
+    &lt;td&gt;This is the operating system we're targeting, in this case, Windows.&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;&lt;code&gt;msvc&lt;/code&gt;&lt;/td&gt;
+    &lt;td&gt;This is the compiler we want to use. MSVC is an abbreviation of "Microsoft Visual C++".&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;If you're interested in reading more about the different supported platforms
+in Rust, you can find the full list over at&lt;br /&gt;
+&lt;a href="https://forge.rust-lang.org/release/platform-support.html"&gt;https://forge.rust-lang.org/release/platform-support.html&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id="installing-the-toolchain-target"&gt;Installing the toolchain target&lt;/h2&gt;
+&lt;p&gt;Rust supports cross-compilation, so there's no need to build our ARM64 app on an
+ARM64 machine, and even if we wanted to, it would prove difficult since essential
+tools like &lt;a href="https://doc.rust-lang.org/cargo/"&gt;Cargo&lt;/a&gt; isn't available for ARM64 on
+Windows. The only prerequisite for cross-compiling is a compiler
+that can target the desired platform and all the necessary dependencies
+required to compile the code.&lt;/p&gt;
+&lt;p&gt;To compile our application for ARM64, we need to install the
+&lt;code&gt;aarch64-pc-windows-msvc&lt;/code&gt; target for our Rust compiler toolchain.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; rustup target install aarch64-pc-windows-msvc
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If you want to see what toolchain targets are available or installed, you can
+use the &lt;code&gt;rustup target list&lt;/code&gt; command.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;gt; rustup target list
+aarch64-apple-ios
+aarch64-fuchsia
+aarch64-linux-android
+aarch64-pc-windows-msvc (installed)
+aarch64-unknown-linux-gnu
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="building-for-arm64"&gt;Building for ARM64&lt;/h2&gt;
+&lt;p&gt;Now when the correct toolchain target has been installed, let's go ahead and
+create a new binary and build it with our newly installed target.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; cargo build --target=aarch64-pc-windows-msvc
+   Compiling helloworld v0.1.0 (D:\Source\local\helloworld)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.36s
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="automatically-build-with-a-specific-target"&gt;Automatically build with a specific target&lt;/h3&gt;
+&lt;p&gt;If you always want to build for this target, you can create&lt;code&gt;.cargo/config&lt;/code&gt;
+in your repository root and add the following contents to it:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-toml"&gt;[build]
+target = &amp;quot;aarch64-pc-windows-msvc&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="running-on-an-arm64-machine"&gt;Running on an ARM64 machine&lt;/h2&gt;
+&lt;p&gt;Everything compiled! Not a big surprise, it's &amp;quot;Guaranteed to build&amp;quot; after all,
+but it felt good anyway. Time to test it out on an actual ARM64 machine.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; ./helloworld.exe
+-1073741515
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="oh-noes"&gt;Oh noes&lt;/h3&gt;
+&lt;p&gt;The application exited with the error code &lt;code&gt;-1073741515&lt;/code&gt;,
+more famously known as &lt;code&gt;0xC0000135&lt;/code&gt;, which is Windows' way of telling us that
+an essential component is missing. It turns out that we need to install the
+&lt;a href="https://aka.ms/vs/16/release/VC_redist.arm64.exe"&gt;&lt;em&gt;Microsoft Visual C++ Redistributable for Visual Studio 2019&lt;/em&gt;&lt;/a&gt;
+for ARM64.&lt;/p&gt;
+&lt;p&gt;Installing the MSVC redistributable and rerunning our app
+now produces the expected output.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-text"&gt;&amp;gt; ./helloworld.exe
+Hello World
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;Not super complicated stuff, but hopefully this post has been useful for you if you
+wanted to learn more about Rust's different platform tiers, toolchain targets, and cross-compilation.&lt;/p&gt;
+</content:encoded>
+			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
+		</item>
+		<item>
+			<title>How to create .NET Core release artifacts with GitHub Actions</title>
+			<link>https://patriksvensson.se/posts/2020/03/creating-release-artifacts-with-github-actions</link>
+			<description>&lt;p&gt;In this blog post, we'll create a &lt;a href="https://github.com/features/actions"&gt;GitHub Action&lt;/a&gt; that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.&lt;/p&gt;</description>
+			<author>Patrik Svensson</author>
+			<guid>https://patriksvensson.se/posts/2020/03/creating-release-artifacts-with-github-actions</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;In this blog post, we'll create a &lt;a href="https://github.com/features/actions"&gt;GitHub Action&lt;/a&gt; that triggers each time a release is published, builds a binary on three different build agents (Windows, macOS, and Ubuntu), and attaches the compressed artifacts to the release.&lt;/p&gt;
+&lt;!--excerpt--&gt;
+&lt;p&gt;There's a myriad of ways of doing this, but this has so far worked out great for me.&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/gh_assets.png" alt="A GitHub release with artifacts"&gt;&lt;/p&gt;
+&lt;p&gt;For this blog post, I've created a .NET Core 3.1 console application whose only purpose is to write "Hello World" to the console. It's this application we build and package when we create a new GitHub release, and the source code can be found at &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src"&gt;https://github.com/patriksvensson/dotnet-release-artifacts/tree/master/src&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id="create-the-github-action"&gt;1. Create the GitHub Action&lt;/h2&gt;
+&lt;p&gt;We start by creating a new &lt;a href="https://help.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#creating-a-workflow-file"&gt;workflow file&lt;/a&gt; under &lt;code&gt;.github/workflows&lt;/code&gt; in the repository. We call this &lt;code&gt;ci.yaml&lt;/code&gt;, but you can name this anything you want as long as it's a YAML file. We then proceed to tell GitHub that we want this workflow to run every time we publish a new release.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;name: Publish
+on:
+  release:
+    types: [published]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="define-the-build-strategy"&gt;2. Define the build strategy&lt;/h2&gt;
+&lt;p&gt;Now we want to add a job, which we'll call &lt;code&gt;Release&lt;/code&gt;, and define a build strategy. We'll use a &lt;a href="https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstrategy"&gt;matrix&lt;/a&gt; with all the information we need for our different builds, such as what build agent we want to use for each element in the matrix, and what runtime to target.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;jobs:
+  release:
+    name: Release
+    strategy:
+      matrix:
+        kind: ['linux', 'windows', 'macOS']
+        include:
+          - kind: linux
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+          - kind: macOS
+            os: macos-latest
+            target: osx-x64
+    runs-on: ${{ matrix.os }}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Notice that we reference the &lt;code&gt;os&lt;/code&gt; matrix metadata in the &lt;code&gt;runs-on&lt;/code&gt; node via &lt;code&gt;{{ matrix.os }}&lt;/code&gt;. You can reference any data defined in the matrix this way.&lt;/p&gt;
+&lt;p&gt;As you can see in the image below, the name of each step in the matrix will be a combination of the job name and the name of the matrix element.&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/gh_job.png" alt="A GitHub Actions job"&gt;&lt;/p&gt;
+&lt;h2 id="build-package-and-publish"&gt;3. Build, package and publish&lt;/h2&gt;
+&lt;p&gt;Now when we've defined the workflow and the build matrix, we'll have to do four things.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Check out the code&lt;/li&gt;
+&lt;li&gt;Setup .NET Core and define what SDK we're going to use&lt;/li&gt;
+&lt;li&gt;Build our project and create the release artifacts&lt;/li&gt;
+&lt;li&gt;Publish the release artifacts&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Let's start with the first two since there are already pre-made actions for these.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.101
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now when everything is in place, we need to build our artifacts and publish them. Since we want to be idiomatic on all platforms, we zip the artifacts on Windows and package them as &lt;code&gt;tar.gz&lt;/code&gt; on Linux and macOS.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;      - name: Build
+        shell: bash
+        run: |
+          # Define some variables for things we need
+          tag=$(git describe --tags --abbrev=0)
+          release_name="App-$tag-${{ matrix.target }}"
+
+          # Build everything
+          dotnet publish src/App/App.csproj --framework netcoreapp3.1 --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+
+          # Pack files
+          if [ "${{ matrix.target }}" == "win-x64" ]; then
+            7z a -tzip "${release_name}.zip" "./${release_name}/*"
+          else
+            tar czvf "${release_name}.tar.gz" "$release_name"
+          fi
+
+          # Delete output directory
+          rm -r "$release_name"
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You might have noticed that we run the build step in a Bash shell and wonder how that works on Windows (at least I did). The answer is that it runs under Git Bash and not under Windows Subsystem for Linux (WSL), as one might have thought.&lt;/p&gt;
+&lt;p&gt;Finally, once we've built and packaged everything up, we'll add the artifacts to our release. For this, we'll use &lt;a href="https://github.com/softprops/action-gh-release"&gt;softprops/action-gh-release&lt;/a&gt; GitHub Action, which I think works very well.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yaml"&gt;      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "App*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;That's all there is to it. If you want to create a release, all you have to do is create a new tag, go to the GitHub release page, and create a release from the newly created tag.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-shell"&gt;&amp;gt; git tag 1.0
+&amp;gt; git push --tags
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You can find the complete YAML file &lt;a href="https://github.com/patriksvensson/dotnet-release-artifacts/blob/master/.github/workflows/ci.yaml"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id="wrapping-up"&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;As I've previously mentioned, there is a myriad of different ways of doing this. What I have described in this blog post is only one of them, but I've found that it has served me well and is reasonably easy to understand even if you're new to GitHub Actions.&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
 			<title>Testing stuff with Windows Sandbox</title>
-			<link>https://patriksvensson.se/2020/02/testing-stuff-with-windows-sandbox</link>
+			<link>https://patriksvensson.se/posts/2020/02/testing-stuff-with-windows-sandbox</link>
 			<description>&lt;p&gt;Last week I decided that I wanted to try the new version of Windows Subsystem
 for Linux (conveniently
 named &lt;code&gt;WSL 2&lt;/code&gt;). WSL 2 requires that the computer enrolls in Windows slow ring, and
 since the computer I was on didn't receive any insider builds at all, I went
 ahead and enabled the slow ring. The update started, and I went to bed.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2020/02/testing-stuff-with-windows-sandbox</guid>
-			<pubDate>Sun, 23 Feb 2020 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2020/02/testing-stuff-with-windows-sandbox</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;Last week I decided that I wanted to try the new version of Windows Subsystem
 for Linux (conveniently
 named &lt;code&gt;WSL 2&lt;/code&gt;). WSL 2 requires that the computer enrolls in Windows slow ring, and
 since the computer I was on didn't receive any insider builds at all, I went
 ahead and enabled the slow ring. The update started, and I went to bed.&lt;/p&gt;
 &lt;p&gt;When I woke up the next morning, I saw this:&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/fubar.jpg" alt="computer can't find MBR"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/fubar.jpg" alt="computer can't find MBR"&gt;&lt;/p&gt;
 &lt;p&gt;I tried restoring the master boot record using a recovery disk, but I couldn't
 get this to work for some unknown reason.&lt;/p&gt;
 &lt;p&gt;Luckily (😅), my computer crashed for almost the same reason a couple of months
@@ -795,7 +790,7 @@ ago, so I had started to prepare some scripts to help me set up a new computer
 using &lt;a href="https://chocolatey.org/"&gt;Chocolatey&lt;/a&gt; and
 &lt;a href="https://boxstarter.org/"&gt;Boxstarter&lt;/a&gt;. The scripts were far from perfect but
 worked well enough to get my computer up and running in less than 30 minutes.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/boxstarter.jpg" alt="Boxstarter"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/boxstarter.jpg" alt="Boxstarter"&gt;&lt;/p&gt;
 &lt;p&gt;After the installation, I started making some adjustments to the script and
 wanted to try it all out. Since I want the setup part to be as smooth as
 possible, I was contemplating whether to do another reinstall of Windows and
@@ -852,7 +847,7 @@ click it, and a new Sandbox environment gets created for you.&lt;/p&gt;
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;So by simply double-clicking on the configuration file, A new sandboxed
 environment gets created, and my installation script starts.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/windows-sandbox.png" alt="Windows Sandbox"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/windows-sandbox.png" alt="Windows Sandbox"&gt;&lt;/p&gt;
 &lt;h2 id="detect-if-youre-running-in-the-sandbox"&gt;Detect if you're running in the sandbox&lt;/h2&gt;
 &lt;p&gt;There are some things you don't want to do in a sandboxed environment. Perhaps
 it's not permitted, such as installing the Windows Sandbox, or you don't
@@ -876,12 +871,12 @@ suggestions, feel free to reach out to me on Twitter.&lt;/p&gt;
 		</item>
 		<item>
 			<title>Roaming profiles with Windows Terminal</title>
-			<link>https://patriksvensson.se/2019/12/roaming-profiles-with-windows-terminal</link>
+			<link>https://patriksvensson.se/posts/2019/12/roaming-profiles-with-windows-terminal</link>
 			<description>&lt;p&gt;If you have more than one computer that you use, you might have noticed
 that it requires some work to keep your Windows Terminal profile up to date.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2019/12/roaming-profiles-with-windows-terminal</guid>
-			<pubDate>Mon, 02 Dec 2019 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2019/12/roaming-profiles-with-windows-terminal</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;If you have more than one computer that you use, you might have noticed
 that it requires some work to keep your Windows Terminal profile up to date.&lt;/p&gt;
 &lt;p&gt;I've always been a fan of keeping configuration files and similar in
@@ -924,65 +919,48 @@ Feel free to fork or copy it if you want a starting point for your own configura
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
-			<title>How to find a NuGet package path from MSBuild</title>
-			<link>https://patriksvensson.se/2019/09/how-to-find-a-nuget-package-path-from-msbuild</link>
-			<description>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
-and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
-to &lt;a href="https://patriksvensson.se/1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
-and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
-&lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
-&lt;a href="https://patriksvensson.se/2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
-As annoying as breaking changes are I realized that this change was an improvement
-in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;</description>
+			<title>Using build counters in Azure DevOps</title>
+			<link>https://patriksvensson.se/posts/2019/03/build-counters-in-azure-devops</link>
+			<description>&lt;p&gt;We recently migrated some builds from TeamCity to Azure DevOps at my client, and couldn't
+find a feature analog to TeamCity's &lt;code&gt;%build.counter%&lt;/code&gt; which we've been using
+to get automatically incremented version numbers for artifacts.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2019/09/how-to-find-a-nuget-package-path-from-msbuild</guid>
-			<pubDate>Mon, 30 Sep 2019 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
-and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
-to &lt;a href="https://patriksvensson.se/1"&gt;the new one&lt;/a&gt;. That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
-and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
-&lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
-&lt;a href="https://patriksvensson.se/2"&gt;TFM&lt;/a&gt; folder wasn't copied to the application's output folder anymore.
-As annoying as breaking changes are I realized that this change was an improvement
-in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;
+			<guid>https://patriksvensson.se/posts/2019/03/build-counters-in-azure-devops</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;We recently migrated some builds from TeamCity to Azure DevOps at my client, and couldn't
+find a feature analog to TeamCity's &lt;code&gt;%build.counter%&lt;/code&gt; which we've been using
+to get automatically incremented version numbers for artifacts.&lt;/p&gt;
 &lt;!--excerpt--&gt;
-&lt;p&gt;There was a &lt;a href="https://patriksvensson.se/3"&gt;feature added&lt;/a&gt; in the NuGet client library that was shipped with
-Visual Studio 15.9.9 that introduced a new attribute to the &lt;code&gt;PackageReference&lt;/code&gt;
-element called &lt;code&gt;GeneratePathProperty&lt;/code&gt;. What this attribute does is that it creates
-a new MSBuild property that is set to the package's root path on disk.&lt;/p&gt;
-&lt;p&gt;Knowing where the NuGet package would be unpacked on disk allowed me to write a
-MSBuild target, that after building my project would copy the file to the output
-directory.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;!-- Specify what packages we're dependent on --&amp;gt;
-&amp;lt;ItemGroup&amp;gt;
-    &amp;lt;PackageReference Include="Foo.Bar" 
-                      Version="1.2.3" 
-                      GeneratePathProperty="true" /&amp;gt;
-&amp;lt;/ItemGroup&amp;gt;
-
-&amp;lt;!-- Copy the files to the output directory --&amp;gt;
-&amp;lt;Target Name="CopyFooBarFiles" AfterTargets="Build"&amp;gt;
-    &amp;lt;Copy Condition="'$(TargetFramework)' == 'net462'" 
-          SourceFiles="$(PkgFoo_Bar)\lib\net40\qux.dat" 
-          DestinationFolder="$(OutDir)" /&amp;gt;
-&amp;lt;/Target&amp;gt;
+&lt;p&gt;Since we couldn't find the corresponding feature in Azure DevOps we settled on using the
+&lt;code&gt;$(Build.BuildId)&lt;/code&gt; variable which is the canonical ID for a build. Not exactly ideal
+but it solved the immediate issue.&lt;/p&gt;
+&lt;p&gt;Today I found a way of accomplishing the same thing in Azure DevOps, but sadly it's not
+properly documented even if it's &lt;a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&amp;amp;tabs=yaml%2Cbatch#set-variables-using-expressions"&gt;briefly mentioned&lt;/a&gt; in the official documentation.
+The following lines in your &lt;code&gt;azure-devops.yml&lt;/code&gt; will set the build number to an
+incrementing number that's scoped to the build definition.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-yml"&gt;name: 1.0.$(myBuildCounter)
+variables:
+  myBuildCounter: $[counter('buildCounter',1)]
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;So by setting &lt;code&gt;GeneratePathProperty="true"&lt;/code&gt; for the &lt;code&gt;Foo.Bar&lt;/code&gt; reference above, an
-MSBuild property named &lt;code&gt;PkgFoo_Bar&lt;/code&gt; automatically gets created set to the path to
-the package on disk.&lt;/p&gt;
+&lt;p&gt;The example above will create a build definition counter called &lt;code&gt;buildCounter&lt;/code&gt; that
+will be initialized to the value &lt;code&gt;1&lt;/code&gt;. This value will be incremented for
+each new build. If you ever want to reset or reseed this value you'll have to use the
+&lt;a href="https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions?view=vsts-rest-tfs-4.1"&gt;Azure DevOps HTTP API&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;If you have an option, consider using something like &lt;a href="https://gitversion.readthedocs.io/en/latest/"&gt;GitVersion&lt;/a&gt;
+or &lt;a href="https://github.com/adamralph/minver"&gt;MinVer&lt;/a&gt; to dynamically calculate a version number from a git repository.&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
 			<title>Debugging an UWP store app with WinDbg</title>
-			<link>https://patriksvensson.se/2019/06/debugging-an-uwp-store-app-with-windbg</link>
+			<link>https://patriksvensson.se/posts/2019/06/debugging-an-uwp-store-app-with-windbg</link>
 			<description>&lt;p&gt;I was encountering a rather irritating bug a couple of days ago that only manifested itself
 when built via the native toolchain in release mode. I couldn't get it to manifest itself
 when running from Visual Studio for some reason and the problem occurred so early in the app's
 lifecycle that I didn't have time to create a minidump of the process.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2019/06/debugging-an-uwp-store-app-with-windbg</guid>
-			<pubDate>Thu, 27 Jun 2019 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2019/06/debugging-an-uwp-store-app-with-windbg</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;I was encountering a rather irritating bug a couple of days ago that only manifested itself
 when built via the native toolchain in release mode. I couldn't get it to manifest itself
 when running from Visual Studio for some reason and the problem occurred so early in the app's
@@ -1012,41 +990,63 @@ $WinDebugPath = &amp;quot;C:\Program Files (x86)\Windows Kits\10\Debuggers\$($Pa
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
-			<title>Using build counters in Azure DevOps</title>
-			<link>https://patriksvensson.se/2019/03/build-counters-in-azure-devops</link>
-			<description>&lt;p&gt;We recently migrated some builds from TeamCity to Azure DevOps at my client, and couldn't
-find a feature analog to TeamCity's &lt;code&gt;%build.counter%&lt;/code&gt; which we've been using
-to get automatically incremented version numbers for artifacts.&lt;/p&gt;</description>
+			<title>How to find a NuGet package path from MSBuild</title>
+			<link>https://patriksvensson.se/posts/2019/09/how-to-find-a-nuget-package-path-from-msbuild</link>
+			<description>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
+and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
+to &lt;a href="https://docs.microsoft.com/en-us/dotnet/core/tools/csproj"&gt;the new one&lt;/a&gt;.
+That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
+and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
+&lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
+&lt;a href="https://docs.microsoft.com/en-us/dotnet/standard/frameworks"&gt;TFM&lt;/a&gt; folder
+wasn't copied to the application's output folder anymore.
+As annoying as breaking changes are I realized that this change was an improvement
+in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2019/03/build-counters-in-azure-devops</guid>
-			<pubDate>Wed, 13 Mar 2019 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;We recently migrated some builds from TeamCity to Azure DevOps at my client, and couldn't
-find a feature analog to TeamCity's &lt;code&gt;%build.counter%&lt;/code&gt; which we've been using
-to get automatically incremented version numbers for artifacts.&lt;/p&gt;
+			<guid>https://patriksvensson.se/posts/2019/09/how-to-find-a-nuget-package-path-from-msbuild</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;Lately I've been porting some projects at a client from .NET Framework to .NET Core,
+and as part  of that I had to convert &lt;code&gt;csproj&lt;/code&gt; files from the old project format
+to &lt;a href="https://docs.microsoft.com/en-us/dotnet/core/tools/csproj"&gt;the new one&lt;/a&gt;.
+That means getting rid of package references in &lt;code&gt;packages.config&lt;/code&gt;
+and replacing them with &lt;code&gt;PackageReference&lt;/code&gt; elements in the project files.&lt;/p&gt;
+&lt;p&gt;When doing this, I noticed that some files that was part of a NuGet package's
+&lt;a href="https://docs.microsoft.com/en-us/dotnet/standard/frameworks"&gt;TFM&lt;/a&gt; folder
+wasn't copied to the application's output folder anymore.
+As annoying as breaking changes are I realized that this change was an improvement
+in many ways, but I still needed to find a way to solve the problem.&lt;/p&gt;
 &lt;!--excerpt--&gt;
-&lt;p&gt;Since we couldn't find the corresponding feature in Azure DevOps we settled on using the
-&lt;code&gt;$(Build.BuildId)&lt;/code&gt; variable which is the canonical ID for a build. Not exactly ideal
-but it solved the immediate issue.&lt;/p&gt;
-&lt;p&gt;Today I found a way of accomplishing the same thing in Azure DevOps, but sadly it's not
-properly documented even if it's &lt;a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&amp;amp;tabs=yaml%2Cbatch#set-variables-using-expressions"&gt;briefly mentioned&lt;/a&gt; in the official documentation.
-The following lines in your &lt;code&gt;azure-devops.yml&lt;/code&gt; will set the build number to an
-incrementing number that's scoped to the build definition.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-yml"&gt;name: 1.0.$(myBuildCounter)
-variables:
-  myBuildCounter: $[counter('buildCounter',1)]
+&lt;p&gt;There was a &lt;a href="https://github.com/NuGet/NuGet.Client/pull/2271"&gt;feature added&lt;/a&gt;
+in the NuGet client library that was shipped with
+Visual Studio 15.9.9 that introduced a new attribute to the &lt;code&gt;PackageReference&lt;/code&gt;
+element called &lt;code&gt;GeneratePathProperty&lt;/code&gt;. What this attribute does is that it creates
+a new MSBuild property that is set to the package's root path on disk.&lt;/p&gt;
+&lt;p&gt;Knowing where the NuGet package would be unpacked on disk allowed me to write a
+MSBuild target, that after building my project would copy the file to the output
+directory.&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;!-- Specify what packages we're dependent on --&amp;gt;
+&amp;lt;ItemGroup&amp;gt;
+    &amp;lt;PackageReference Include=&amp;quot;Foo.Bar&amp;quot; 
+                      Version=&amp;quot;1.2.3&amp;quot; 
+                      GeneratePathProperty=&amp;quot;true&amp;quot; /&amp;gt;
+&amp;lt;/ItemGroup&amp;gt;
+
+&amp;lt;!-- Copy the files to the output directory --&amp;gt;
+&amp;lt;Target Name=&amp;quot;CopyFooBarFiles&amp;quot; AfterTargets=&amp;quot;Build&amp;quot;&amp;gt;
+    &amp;lt;Copy Condition=&amp;quot;'$(TargetFramework)' == 'net462'&amp;quot; 
+          SourceFiles=&amp;quot;$(PkgFoo_Bar)\lib\net40\qux.dat&amp;quot; 
+          DestinationFolder=&amp;quot;$(OutDir)&amp;quot; /&amp;gt;
+&amp;lt;/Target&amp;gt;
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;The example above will create a build definition counter called &lt;code&gt;buildCounter&lt;/code&gt; that
-will be initialized to the value &lt;code&gt;1&lt;/code&gt;. This value will be incremented for
-each new build. If you ever want to reset or reseed this value you'll have to use the
-&lt;a href="https://docs.microsoft.com/en-us/rest/api/azure/devops/build/definitions?view=vsts-rest-tfs-4.1"&gt;Azure DevOps HTTP API&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;If you have an option, consider using something like &lt;a href="https://gitversion.readthedocs.io/en/latest/"&gt;GitVersion&lt;/a&gt;
-or &lt;a href="https://github.com/adamralph/minver"&gt;MinVer&lt;/a&gt; to dynamically calculate a version number from a git repository.&lt;/p&gt;
+&lt;p&gt;So by setting &lt;code&gt;GeneratePathProperty=&amp;quot;true&amp;quot;&lt;/code&gt; for the &lt;code&gt;Foo.Bar&lt;/code&gt; reference above, an
+MSBuild property named &lt;code&gt;PkgFoo_Bar&lt;/code&gt; automatically gets created set to the path to
+the package on disk.&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
 			<title>Generating API clients using AutoRest</title>
-			<link>https://patriksvensson.se/2018/10/generating-api-clients-using-autorest</link>
+			<link>https://patriksvensson.se/posts/2018/10/generating-api-clients-using-autorest</link>
 			<description>&lt;p&gt;This blog post looks at automatically generating an HTTP API client
 from a &lt;a href="https://swagger.io/specification/"&gt;OpenAPI specification&lt;/a&gt;
 (formerly swagger) using &lt;a href="http://azure.github.io/autorest/"&gt;AutoRest&lt;/a&gt;.&lt;/p&gt;
@@ -1054,8 +1054,8 @@ from a &lt;a href="https://swagger.io/specification/"&gt;OpenAPI specification&l
 which is an ASP.NET Core library that allows us to annotate our
 controllers with metadata that is used to generate OpenAPI specifications.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2018/10/generating-api-clients-using-autorest</guid>
-			<pubDate>Tue, 02 Oct 2018 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2018/10/generating-api-clients-using-autorest</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;This blog post looks at automatically generating an HTTP API client
 from a &lt;a href="https://swagger.io/specification/"&gt;OpenAPI specification&lt;/a&gt;
 (formerly swagger) using &lt;a href="http://azure.github.io/autorest/"&gt;AutoRest&lt;/a&gt;.&lt;/p&gt;
@@ -1233,15 +1233,15 @@ That way you always have a way to quickly regenerate the client if you manage to
 		</item>
 		<item>
 			<title>An introduction to Spectre.Cli</title>
-			<link>https://patriksvensson.se/2018/04/an-introduction-to-spectre-cli</link>
+			<link>https://patriksvensson.se/posts/2018/04/an-introduction-to-spectre-cli</link>
 			<description>&lt;p&gt;I've been writing a lot of CLI apps, both at work and in my free time, and there's never really
 been a command line parsing framework that has fitted my needs. While being either too complex
 or too simple, it's always nagged me that I need to write so much code myself. What I wanted
 was a way to be declarative about my commands, options and arguments while still allowing
 composition of them.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2018/04/an-introduction-to-spectre-cli</guid>
-			<pubDate>Tue, 10 Apr 2018 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2018/04/an-introduction-to-spectre-cli</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;I've been writing a lot of CLI apps, both at work and in my free time, and there's never really
 been a command line parsing framework that has fitted my needs. While being either too complex
 or too simple, it's always nagged me that I need to write so much code myself. What I wanted
@@ -1347,25 +1347,25 @@ experiment and makes the CLI experience a first class citizen of your applicatio
 &lt;h2 id="errors"&gt;Errors&lt;/h2&gt;
 &lt;p&gt;I've also put some time in making the help screens and errors more intuitive than most other
 command line parsing frameworks.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/command_help.png" alt="Help"&gt;&lt;br&gt;
-&lt;img src="https://patriksvensson.se/images/command_error.png" alt="Error"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/command_help.png" alt="Help"&gt;&lt;br&gt;
+&lt;img src="https://patriksvensson.se/command_error.png" alt="Error"&gt;&lt;/p&gt;
 &lt;h2 id="what-else"&gt;What else?&lt;/h2&gt;
 &lt;p&gt;This article was meant as an introduction to Spectre.Cli, but the framework itself contains a
 lot of other things as well such as dependency injection, validation and async/await support.
 More about that in a later blog post!&lt;/p&gt;
 &lt;p&gt;If you want to see Spectre.Cli in action I recommend you to take a look at the
-&lt;a href="https://github.com/spectresystems/spectre.cli/tree/develop/samples"&gt;sample applications&lt;/a&gt; in the
+&lt;a href="https://github.com/spectreconsole/spectre.console/tree/main/examples/Cli"&gt;sample applications&lt;/a&gt; in the
 source code repository.&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
 			<title>Debugging Rust on Windows using Visual Studio Code</title>
-			<link>https://patriksvensson.se/2018/02/debugging-rust-on-windows-using-vscode</link>
+			<link>https://patriksvensson.se/posts/2018/02/debugging-rust-on-windows-using-vscode</link>
 			<description>&lt;p&gt;I recently wanted to debug a Rust program on Windows that I had written, and was struggling with how to get it to work. Since there was quite a lot of hoops to jump through to get it to work, I though I should share it with other people as well. I've written this blog post from memory and I'm far from an expert in LLVM or Rust, so if you see something strange here then let me know.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2018/02/debugging-rust-on-windows-using-vscode</guid>
-			<pubDate>Thu, 01 Feb 2018 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2018/02/debugging-rust-on-windows-using-vscode</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;I recently wanted to debug a Rust program on Windows that I had written, and was struggling with how to get it to work. Since there was quite a lot of hoops to jump through to get it to work, I though I should share it with other people as well. I've written this blog post from memory and I'm far from an expert in LLVM or Rust, so if you see something strange here then let me know.&lt;/p&gt;
 &lt;p&gt;The drawback of this approach is that you can't debug applications built using the MSVC toolchain. If you know how to do this, please tell me. I would really appreciate it.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;UPDATE 2018-02-02:&lt;/strong&gt;&lt;br&gt;
@@ -1440,19 +1440,80 @@ rustc 1.23.0 (766bd11c8 2018-01-01)
 &lt;/code&gt;&lt;/pre&gt;
 &lt;h3 id="profit"&gt;9. Profit&lt;/h3&gt;
 &lt;p&gt;Press F5 again. You should now be debugging your code.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://patriksvensson.se/images/rust-debugging.png" alt="Debugging Rust"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://patriksvensson.se/rust-debugging.png" alt="Debugging Rust"&gt;&lt;/p&gt;
+</content:encoded>
+			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
+		</item>
+		<item>
+			<title>Binding to a RichTextBox in WPF</title>
+			<link>https://patriksvensson.se/posts/2017/12/binding-to-a-richtextbox-in-wpf</link>
+			<description>&lt;p&gt;I've been doing some WPF development the last couple of weeks, and one thing that bugged me was that there is no way (as far as I know) to bind content to a &lt;code&gt;RichTextBox&lt;/code&gt;. This makes it kind of difficult to follow the MVVM pattern since the view model needs intimate knowledge of the view.&lt;/p&gt;</description>
+			<author>Patrik Svensson</author>
+			<guid>https://patriksvensson.se/posts/2017/12/binding-to-a-richtextbox-in-wpf</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;I've been doing some WPF development the last couple of weeks, and one thing that bugged me was that there is no way (as far as I know) to bind content to a &lt;code&gt;RichTextBox&lt;/code&gt;. This makes it kind of difficult to follow the MVVM pattern since the view model needs intimate knowledge of the view.&lt;/p&gt;
+&lt;p&gt;In my case, I wanted to bind the textbox against a resource using a &lt;code&gt;pack://&lt;/code&gt; URI, so I threw together some code to do this. I am far from an expert on WPF, so if you have any suggestions then please let me know!&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-csharp"&gt;using System;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+
+namespace MyApp.Controls
+{
+    public sealed class BindableRichTextBox : RichTextBox
+    {
+        public static readonly DependencyProperty SourceProperty =
+            DependencyProperty.Register(&amp;quot;Source&amp;quot;,
+                typeof(Uri), typeof(BindableRichTextBox),
+                new PropertyMetadata(OnSourceChanged));
+
+        public Uri Source
+        {
+            get =&amp;gt; GetValue(SourceProperty) as Uri;
+            set =&amp;gt; SetValue(SourceProperty, value);
+        }
+
+        private static void OnSourceChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
+        {
+            if (obj is BindableRichTextBox rtf &amp;amp;&amp;amp; rtf.Source != null)
+            {
+                var stream = Application.GetResourceStream(rtf.Source);
+                if (stream != null)
+                {
+                    var range = new TextRange(rtf.Document.ContentStart, rtf.Document.ContentEnd);
+                    range.Load(stream.Stream, DataFormats.Rtf);
+                }
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You can now use a binding as you normally would in your XAML (or simply set it directly).&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;Window x:Class=&amp;quot;MyApp.MyView&amp;quot;
+        xmlns=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml/presentation&amp;quot;
+        xmlns:x=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml&amp;quot;
+        xmlns:d=&amp;quot;http://schemas.microsoft.com/expression/blend/2008&amp;quot;
+        xmlns:mc=&amp;quot;http://schemas.openxmlformats.org/markup-compatibility/2006&amp;quot;
+        xmlns:ui=&amp;quot;clr-namespace:MyApp.Controls&amp;quot;
+        mc:Ignorable=&amp;quot;d&amp;quot;&amp;gt;
+    &amp;lt;StackPanel&amp;gt;
+        &amp;lt;ui:BindableRichTextBox Source=&amp;quot;{Binding Licenses}&amp;quot; /&amp;gt;
+        &amp;lt;ui:BindableRichTextBox Source=&amp;quot;pack://application:,,,/MyApp;component/MyApp/Resources/Document.rtf&amp;quot; /&amp;gt;
+    &amp;lt;/StackPanel&amp;gt;
+&amp;lt;/Window&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
 			<title>Calculating product versions for MSI packages compatible with semantic versioning</title>
-			<link>https://patriksvensson.se/2018/01/calculating-msi-product-version</link>
+			<link>https://patriksvensson.se/posts/2018/01/calculating-msi-product-version</link>
 			<description>&lt;p&gt;In my new project &lt;a href="https://github.com/spectresystems/jarvis"&gt;Jarvis&lt;/a&gt; I wanted to start
 generate preview versions of the MSI packages, but one problem with that is that MSI
 requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org/"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2018/01/calculating-msi-product-version</guid>
-			<pubDate>Tue, 30 Jan 2018 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2018/01/calculating-msi-product-version</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;In my new project &lt;a href="https://github.com/spectresystems/jarvis"&gt;Jarvis&lt;/a&gt; I wanted to start
 generate preview versions of the MSI packages, but one problem with that is that MSI
 requires the product version to be in the format &lt;code&gt;Major.Minor.Patch&lt;/code&gt; which isn't compatible with &lt;a href="https://semver.org/"&gt;semantic verisoning&lt;/a&gt;. We CAN use the &lt;code&gt;Major.Minor.Patch.Revision&lt;/code&gt; format as a product version, but that won't work with &lt;a href="https://support.firegiant.com/hc/en-us/articles/230912187-Implement-major-upgrade-"&gt;major upgrades&lt;/a&gt;. An example of this would be &lt;code&gt;1.2.3-alpha45&lt;/code&gt; which would require a different version number than &lt;code&gt;1.2.3-alpha46&lt;/code&gt;.&lt;/p&gt;
@@ -1522,73 +1583,12 @@ PATCH = 10000 + (PATCH * 1000) + PRE
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
-			<title>Binding to a RichTextBox in WPF</title>
-			<link>https://patriksvensson.se/2017/12/binding-to-a-richtextbox-in-wpf</link>
-			<description>&lt;p&gt;I've been doing some WPF development the last couple of weeks, and one thing that bugged me was that there is no way (as far as I know) to bind content to a &lt;code&gt;RichTextBox&lt;/code&gt;. This makes it kind of difficult to follow the MVVM pattern since the view model needs intimate knowledge of the view.&lt;/p&gt;</description>
-			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2017/12/binding-to-a-richtextbox-in-wpf</guid>
-			<pubDate>Mon, 11 Dec 2017 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;I've been doing some WPF development the last couple of weeks, and one thing that bugged me was that there is no way (as far as I know) to bind content to a &lt;code&gt;RichTextBox&lt;/code&gt;. This makes it kind of difficult to follow the MVVM pattern since the view model needs intimate knowledge of the view.&lt;/p&gt;
-&lt;p&gt;In my case, I wanted to bind the textbox against a resource using a &lt;code&gt;pack://&lt;/code&gt; URI, so I threw together some code to do this. I am far from an expert on WPF, so if you have any suggestions then please let me know!&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-csharp"&gt;using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-
-namespace MyApp.Controls
-{
-    public sealed class BindableRichTextBox : RichTextBox
-    {
-        public static readonly DependencyProperty SourceProperty =
-            DependencyProperty.Register(&amp;quot;Source&amp;quot;,
-                typeof(Uri), typeof(BindableRichTextBox),
-                new PropertyMetadata(OnSourceChanged));
-
-        public Uri Source
-        {
-            get =&amp;gt; GetValue(SourceProperty) as Uri;
-            set =&amp;gt; SetValue(SourceProperty, value);
-        }
-
-        private static void OnSourceChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
-        {
-            if (obj is BindableRichTextBox rtf &amp;amp;&amp;amp; rtf.Source != null)
-            {
-                var stream = Application.GetResourceStream(rtf.Source);
-                if (stream != null)
-                {
-                    var range = new TextRange(rtf.Document.ContentStart, rtf.Document.ContentEnd);
-                    range.Load(stream.Stream, DataFormats.Rtf);
-                }
-            }
-        }
-    }
-}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;You can now use a binding as you normally would in your XAML (or simply set it directly).&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-xml"&gt;&amp;lt;Window x:Class=&amp;quot;MyApp.MyView&amp;quot;
-        xmlns=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml/presentation&amp;quot;
-        xmlns:x=&amp;quot;http://schemas.microsoft.com/winfx/2006/xaml&amp;quot;
-        xmlns:d=&amp;quot;http://schemas.microsoft.com/expression/blend/2008&amp;quot;
-        xmlns:mc=&amp;quot;http://schemas.openxmlformats.org/markup-compatibility/2006&amp;quot;
-        xmlns:ui=&amp;quot;clr-namespace:MyApp.Controls&amp;quot;
-        mc:Ignorable=&amp;quot;d&amp;quot;&amp;gt;
-    &amp;lt;StackPanel&amp;gt;
-        &amp;lt;ui:BindableRichTextBox Source=&amp;quot;{Binding Licenses}&amp;quot; /&amp;gt;
-        &amp;lt;ui:BindableRichTextBox Source=&amp;quot;pack://application:,,,/MyApp;component/MyApp/Resources/Document.rtf&amp;quot; /&amp;gt;
-    &amp;lt;/StackPanel&amp;gt;
-&amp;lt;/Window&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
-</content:encoded>
-			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
-		</item>
-		<item>
 			<title>Conditionals in XAML</title>
-			<link>https://patriksvensson.se/2017/12/conditionals-in-xaml</link>
+			<link>https://patriksvensson.se/posts/2017/12/conditionals-in-xaml</link>
 			<description>&lt;p&gt;Ever wanted to display things conditionally in XAML based on a pre-processor directive like &lt;code&gt;DEBUG&lt;/code&gt;?&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2017/12/conditionals-in-xaml</guid>
-			<pubDate>Sun, 03 Dec 2017 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2017/12/conditionals-in-xaml</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;Ever wanted to display things conditionally in XAML based on a pre-processor directive like &lt;code&gt;DEBUG&lt;/code&gt;?&lt;/p&gt;
 &lt;p&gt;Start by adding the following to your &lt;code&gt;AssemblyInfo.cs&lt;/code&gt;&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;#if DEBUG
@@ -1626,13 +1626,13 @@ different elements depending on your build configuration.&lt;/p&gt;
 		</item>
 		<item>
 			<title>Using embedded resources in xUnit tests</title>
-			<link>https://patriksvensson.se/2017/11/using-embedded-resources-in-xunit-tests</link>
+			<link>https://patriksvensson.se/posts/2017/11/using-embedded-resources-in-xunit-tests</link>
 			<description>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net/"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
 &lt;a href="https://andrewlock.net/creating-parameterised-tests-in-xunit-with-inlinedata-classdata-and-memberdata"&gt;Creating parameterised tests in xUnit&lt;/a&gt;
 when I remembered something I wrote a while back that has proven to be quite useful.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2017/11/using-embedded-resources-in-xunit-tests</guid>
-			<pubDate>Sat, 11 Nov 2017 00:00:00 GMT</pubDate>
+			<guid>https://patriksvensson.se/posts/2017/11/using-embedded-resources-in-xunit-tests</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
 			<content:encoded>&lt;p&gt;I was reading &lt;a href="https://andrewlock.net/"&gt;Andrew Lock&lt;/a&gt;'s excellent blog post about
 &lt;a href="https://andrewlock.net/creating-parameterised-tests-in-xunit-with-inlinedata-classdata-and-memberdata"&gt;Creating parameterised tests in xUnit&lt;/a&gt;
 when I remembered something I wrote a while back that has proven to be quite useful.&lt;/p&gt;
@@ -1709,24 +1709,28 @@ namespace MyProject.Tests
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>
 		<item>
-			<title>Never mutate state in a Debug.Assert call</title>
-			<link>https://patriksvensson.se/2017/08/never-mutate-state-in-a-debug-assert-call</link>
-			<description>&lt;p&gt;Yesterday I encountered a bug in a library I'm working on that only seemed
-to occur when compiled in release mode. I was scratching my head for a little
-while but suddenly it occured to me when I encountered the following line:&lt;/p&gt;</description>
+			<title>Azure Web Apps and the certificate store</title>
+			<link>https://patriksvensson.se/posts/2016/12/azure-web-apps-and-the-certificate-store</link>
+			<description>&lt;p&gt;I was trying to load a certificate from the certificate store in an Azure Web App today,
+and for some reason I could not find it via it's thumbprint. Since I thought I was
+looking in the wrong certificate store, I went to &lt;a href="https://github.com/projectkudu/kudu"&gt;Kudu&lt;/a&gt;
+to take a closer look via the PowerShell debug console.&lt;/p&gt;</description>
 			<author>Patrik Svensson</author>
-			<guid>https://patriksvensson.se/2017/08/never-mutate-state-in-a-debug-assert-call</guid>
-			<pubDate>Wed, 02 Aug 2017 00:00:00 GMT</pubDate>
-			<content:encoded>&lt;p&gt;Yesterday I encountered a bug in a library I'm working on that only seemed
-to occur when compiled in release mode. I was scratching my head for a little
-while but suddenly it occured to me when I encountered the following line:&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;Debug.Assert(reader.Read() == '-'); // Consume token
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;The problem with the above statement is that calls to &lt;code&gt;Debug.Assert&lt;/code&gt; are conditional,
-so when running under a non-debug build, the call won't be made and the expression
-won't be evaluated.&lt;/p&gt;
-&lt;h2 id="so-what-lessons-can-we-learn-from-this"&gt;So what lessons can we learn from this?&lt;/h2&gt;
-&lt;p&gt;Never mutate state in a &lt;code&gt;Debug.Assert&lt;/code&gt; call.&lt;/p&gt;
+			<guid>https://patriksvensson.se/posts/2016/12/azure-web-apps-and-the-certificate-store</guid>
+			<pubDate>Thu, 10 Mar 2022 14:34:10 GMT</pubDate>
+			<content:encoded>&lt;p&gt;I was trying to load a certificate from the certificate store in an Azure Web App today,
+and for some reason I could not find it via it's thumbprint. Since I thought I was
+looking in the wrong certificate store, I went to &lt;a href="https://github.com/projectkudu/kudu"&gt;Kudu&lt;/a&gt;
+to take a closer look via the PowerShell debug console.&lt;/p&gt;
+&lt;p&gt;My code (probably) wasn't wrong but the certificate simply wasn't there.&lt;/p&gt;
+&lt;p&gt;After some googling I found out that WebApps in Azure doesn't have access to uploaded
+certificates unless you add a special AppSetting variable called &lt;code&gt;WEBSITE_LOAD_CERTIFICATES&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;You can either set this setting to a comma separated list of the certificate thumbprint that you want to expose,
+or you can do what I did (&lt;em&gt;YOLO™&lt;/em&gt;) and set it to &lt;code&gt;*&lt;/code&gt; which exposes all available certificates
+to the application.&lt;/p&gt;
+&lt;p&gt;Also, if you're interested in Kudu (which is awesome), check out &lt;a href="https://twitter.com/devlead"&gt;devlead&lt;/a&gt;'s
+appearance on &lt;em&gt;Azure Podcast&lt;/em&gt; where he spends 30 minutes or so talking about it:
+&lt;a href="http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter"&gt;http://azpodcast.azurewebsites.net/post/Episode-147-Kudu?utm_source=twitterfeed&amp;amp;utm_medium=twitter&lt;/a&gt;&lt;/p&gt;
 </content:encoded>
 			<comments xmlns="http://purl.org/rss/1.0/modules/slash/">0</comments>
 		</item>

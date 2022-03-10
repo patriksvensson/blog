@@ -1,0 +1,312 @@
+<!DOCTYPE html><html lang="en"><head>
+
+    <title>Patrik Svensson - Generating API clients using AutoRest</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link type="application/rss+xml" rel="alternate" title="Patrik Svensson" href="/feed.rss">
+    <link type="application/atom+xml" rel="alternate" title="Patrik Svensson" href="/feed.atom">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+
+    <link href="/assets/styles.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+
+    <meta name="description" content="This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="Patrik Svensson">
+        <meta name="twitter:title" content="Generating API clients using AutoRest">
+        <meta name="twitter:creator" content="This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.">
+        <meta name="twitter:description" content="This is my blog, where I write about stuff that interests me such as .NET, Rust, DevOps and technology in general. I am a husband and a father, and I enjoy contributing to Open Source projects.">
+        <meta name="twitter:image" content="https://patriksvensson.se/posts/2018/10/generating-api-clients-using-autorest-social.png">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    
+</head>
+<body class="antialiased text-base-800 bg-base-800/10 dark:bg-base-800 transition-colors">
+<header class="sticky top-0 left-2 w-full backdrop-blur bg-base-100/80 dark:bg-base-800/80 border-b border-base-900/20 dark:border-base-50/10 shadow-md dark:shadow-lg py-2 md:py-4 z-50">
+    <nav class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 flex  items-center">
+        <h1>
+            <a class="font-extrabold text-2xl sm:text-3xl md:text-3xl base:text-3xl lg:text-4xl xl:text-4xl text-base-700 dark:text-base-300" href="/">
+                Patrik Svensson
+            </a>
+        </h1>
+
+        <div class="ml-auto flex items-center">
+            <a class="ml-2 mr-4 text-base-400 hover:text-blue-400 transition-all hover:scale-105" title="Twitter" href="https://twitter.com/firstdrafthell">
+                <svg width="1.7rem" height="1.7rem" class="fill-current" viewBox="328 355 335 276" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 630, 425 A 195, 195 0 0 1 331, 600 A 142, 142 0 0 0 428, 570 A  70,  70 0 0 1 370, 523 A  70,  70 0 0 0 401, 521 A  70,  70 0 0 1 344, 455 A  70,  70 0 0 0 372, 460 A  70,  70 0 0 1 354, 370 A 195, 195 0 0 0 495, 442 A  67,  67 0 0 1 611, 380 A 117, 117 0 0 0 654, 363 A  65,  65 0 0 1 623, 401 A 117, 117 0 0 0 662, 390 A  65,  65 0 0 1 630, 425 Z"></path>
+                </svg>
+            </a>
+
+            <a class="mr-4 text-base-400 hover:text-blue-400 transition-all hover:scale-105" title="LinkedIn" href="https://www.linkedin.com/in/psvensson82/">
+                <svg width="1.7rem" height="1.7rem" class="fill-current" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M150.65,100.682c0,27.992-22.508,50.683-50.273,50.683c-27.765,0-50.273-22.691-50.273-50.683
+                    C50.104,72.691,72.612,50,100.377,50C128.143,50,150.65,72.691,150.65,100.682z M143.294,187.333H58.277V462h85.017V187.333z
+                    M279.195,187.333h-81.541V462h81.541c0,0,0-101.877,0-144.181c0-38.624,17.779-61.615,51.807-61.615
+                    c31.268,0,46.289,22.071,46.289,61.615c0,39.545,0,144.181,0,144.181h84.605c0,0,0-100.344,0-173.915
+                    s-41.689-109.131-99.934-109.131s-82.768,45.369-82.768,45.369V187.333z"></path>
+                </svg>
+            </a>
+
+            <a class="text-base-400 hover:text-blue-400 transition-all hover:scale-105" title="GitHub" href="https://github.com/patriksvensson">
+                <svg width="1.7rem" height="1.7rem" class="fill-current" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8C0 11.54 2.29 14.53 5.47 15.59C5.87 15.66 6.02 15.42 6.02 15.21C6.02 15.02 6.01 14.39 6.01 13.72C4 14.09 3.48 13.23 3.32 12.78C3.23 12.55 2.84 11.84 2.5 11.65C2.22 11.5 1.82 11.13 2.49 11.12C3.12 11.11 3.57 11.7 3.72 11.94C4.44 13.15 5.59 12.81 6.05 12.6C6.12 12.08 6.33 11.73 6.56 11.53C4.78 11.33 2.92 10.64 2.92 7.58C2.92 6.71 3.23 5.99 3.74 5.43C3.66 5.23 3.38 4.41 3.82 3.31C3.82 3.31 4.49 3.1 6.02 4.13C6.66 3.95 7.34 3.86 8.02 3.86C8.7 3.86 9.38 3.95 10.02 4.13C11.55 3.09 12.22 3.31 12.22 3.31C12.66 4.41 12.38 5.23 12.3 5.43C12.81 5.99 13.12 6.7 13.12 7.58C13.12 10.65 11.25 11.33 9.47 11.53C9.76 11.78 10.01 12.26 10.01 13.01C10.01 14.08 10 14.94 10 15.21C10 15.42 10.15 15.67 10.55 15.59C13.71 14.53 16 11.53 16 8C16 3.58 12.42 0 8 0Z" transform="scale(64)"></path>
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    <nav class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 py-1 flex items-center">
+        <a class="text-base-500 hover:text-blue-400 transition-all mr-4" href="/about">About</a>
+        <a class="text-base-500 hover:text-blue-400 transition-all" href="https://github.com/sponsors/patriksvensson">Sponsor me</a>
+
+        <div class="ml-auto flex items-center">
+        <button aria-label="Toggle Dark Mode" class="ml-2 text-yellow-600 dark:text-base-500 stroke-1 opacity-80" style="padding-right: 2px;" onclick="swapTheme()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+        </button>
+        </div>
+    </nav>
+</header>
+
+<main class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 mt-4 mb-4 md:mb-16 font-light">
+    <header class="mt-6 mb-4 lg:mb-8">
+            <h2 class="font-bold text-primary-700/90 dark:text-primary-500/90 text-3xl lg:font-extrabold lg:text-4xl ">Generating API clients using AutoRest</h2>
+
+    <div class="mt-4">
+        <p class="mb-1 lg:my-b text-sm dark:text-gray-200">Posted <time>Tuesday, October 2, 2018</time></p>
+        
+<ul class="flex space-x-1 md:space-x-2 mb-4 overflow-hidden">
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/csharp"> C#</a>
+        </li>
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/autorest"> AutoRest</a>
+        </li>
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/openapi"> OpenAPI</a>
+        </li>
+<li class="text-xs md:text-sm py-1 px-2 md:py-2 md:px-4 text-primary-100 bg-primary-700/80 border border-primary-600/80 dark:text-base-100 dark:bg-primary-900/75 dark:hover:bg-base-900 dark:border-base-800 rounded md:rounded-md">
+            <a href="/tags/swagger"> Swagger</a>
+        </li>
+</ul>
+    
+    </div>
+    </header>
+    
+    
+
+
+<article class="prose dark:prose-invert mt-8 lg:prose-lg max-w-full font-light lg:leading-loose">
+    <p>This blog post looks at automatically generating an HTTP API client
+from a <a href="https://swagger.io/specification/">OpenAPI specification</a>
+(formerly swagger) using <a href="http://azure.github.io/autorest/">AutoRest</a>.</p>
+<p>We will also use another tool called <a href="https://github.com/domaindrivendev/Swashbuckle.AspNetCore">Swashbuckle</a>
+which is an ASP.NET Core library that allows us to annotate our
+controllers with metadata that is used to generate OpenAPI specifications.</p>
+<!--excerpt-->
+<h2 id="installing-autorest">Installing AutoRest</h2>
+<p>The first thing we need to do is to install <code>AutoRest</code> globally on
+our machine. If you have NPM installed on your computer, then this
+can  be done by running the following command:</p>
+<pre><code>&gt; npm install -g autorest
+</code></pre>
+<h2 id="setting-up-the-code-base">Setting up the code base</h2>
+<p>For this project we're going to create a standard ASP.NET Core
+web project, a class library that will hold our API client and
+a PowerShell script to generate the client for us.</p>
+<p>Why PowerShell and not Cake you might wonder if you know about
+my involvement in the Cake project, and the reason is simple;
+I want this guide to be as build agnostic as it can be, but
+don't worry, I will follow up with a detailed guide of how to
+convert the PowerShell script to a fully fledged Cake build script.</p>
+<p>Start with creating the project.</p>
+<pre><code>&gt; mkdir autorest-example
+&gt; cd autorest-example
+</code></pre>
+<p>Now we want to create a source directory where the source code
+for our API project will live.</p>
+<pre><code>&gt; mkdir src
+&gt; cd src
+</code></pre>
+<p>We continue by creating a solution file, and the two projects I
+mention above using the dotnet CLI.</p>
+<pre><code>&gt; dotnet new sln --name AutoRestExample
+&gt; dotnet new webapi --name Sample.Api
+&gt; dotnet new classlib --name Sample.Client
+&gt; dotnet sln AutoRestExample.sln add ./Sample.Api/Sample.Api.csproj
+&gt; dotnet sln AutoRestExample.sln add ./Sample.Client/Sample.Client.csproj
+</code></pre>
+<p>After this is done you can open the solution file in your editor of choice.
+For this tutorial/guide I will be using Visual Studio, but nothing
+stops you from using Visual Studio Code, Rider or a similar IDE/editor.</p>
+<h2 id="modifying-the-api-project">Modifying the API project</h2>
+<p>We're going to use a library called <code>Swashbuckle</code> to generate the OpenAPI
+specification directly from our ASP.NET Core controllers, so we will need to
+install the necessary NuGet packages.</p>
+<ul>
+<li><a href="http://nuget.org/packages/Swashbuckle.AspNetCore">Swashbuckle.AspNetCore</a></li>
+<li><a href="https://www.nuget.org/packages/Swashbuckle.AspNetCore.Annotations">Swashbuckle.AspNetCore.Annotations</a></li>
+</ul>
+<p>We will also need the <code>Swashbuckle.AspNetCore.Cli</code> tool installed as part of
+our project. This is not a package reference but a <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/extensibility#per-project-based-extensibility">project tool</a>, so we will need
+to add the tool to our csproj manually. Right click on the <code>Sample.Api</code> project
+in the solution explorer and paste the following snippet somewhere under the
+<code>&lt;Project&gt;</code> node.</p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;DotNetCliToolReference Include=&quot;Swashbuckle.AspNetCore.Cli&quot; Version=&quot;3.0.0-beta1&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<h3 id="the-controller">The controller</h3>
+<p>Open up <code>Controllers/ValuesController.cs</code> and replace the content with the following
+code:</p>
+<pre><code class=""><span class="token keyword roslyn-keyword">using</span> <span class="token symbol roslyn-identifier">System</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Collections</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Generic</span><span class="token punctuation roslyn-punctuation">;</span>
+<span class="token keyword roslyn-keyword">using</span> <span class="token symbol roslyn-identifier">Microsoft</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">AspNetCore</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Mvc</span><span class="token punctuation roslyn-punctuation">;</span>
+<span class="token keyword roslyn-keyword">using</span> <span class="token symbol roslyn-identifier">Swashbuckle</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">AspNetCore</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">Annotations</span><span class="token punctuation roslyn-punctuation">;</span>
+
+<span class="token keyword roslyn-keyword">namespace</span> <span class="token namespace-name roslyn-namespace-name">Sample</span><span class="token operator roslyn-operator">.</span><span class="token namespace-name roslyn-namespace-name">Api</span><span class="token operator roslyn-operator">.</span><span class="token namespace-name roslyn-namespace-name">Controllers</span>
+<span class="token punctuation roslyn-punctuation">{</span>
+    <span class="token punctuation roslyn-punctuation">[</span><span class="token symbol roslyn-identifier">ApiController</span><span class="token punctuation roslyn-punctuation">]</span>
+    <span class="token punctuation roslyn-punctuation">[</span><span class="token symbol roslyn-identifier">Route</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"api/[controller]"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">]</span>
+    <span class="token keyword roslyn-keyword">public</span> <span class="token keyword roslyn-keyword">class</span> <span class="token title.class roslyn-class-name">ValuesController</span> <span class="token punctuation roslyn-punctuation">:</span> <span class="token symbol roslyn-identifier">ControllerBase</span>
+    <span class="token punctuation roslyn-punctuation">{</span>
+        <span class="token punctuation roslyn-punctuation">[</span><span class="token symbol roslyn-identifier">HttpGet</span><span class="token punctuation roslyn-punctuation">]</span>
+        <span class="token punctuation roslyn-punctuation">[</span><span class="token symbol roslyn-identifier">ProducesResponseType</span><span class="token punctuation roslyn-punctuation">(</span><span class="token keyword roslyn-keyword">typeof</span><span class="token punctuation roslyn-punctuation">(</span><span class="token symbol roslyn-identifier">ICollection</span><span class="token punctuation roslyn-punctuation"><</span><span class="token keyword roslyn-keyword">string</span><span class="token punctuation roslyn-punctuation">></span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token number roslyn-number">200</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">]</span>
+        <span class="token punctuation roslyn-punctuation">[</span><span class="token symbol roslyn-identifier">SwaggerOperation</span><span class="token punctuation roslyn-punctuation">(</span><span class="token symbol roslyn-identifier">OperationId</span> <span class="token operator roslyn-operator">=</span> <span class="token string roslyn-string">"Values_GetAll"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">]</span>
+        <span class="token keyword roslyn-keyword">public</span> <span class="token symbol roslyn-identifier">ActionResult</span><span class="token punctuation roslyn-punctuation"><</span><span class="token symbol roslyn-identifier">ICollection</span><span class="token punctuation roslyn-punctuation"><</span><span class="token keyword roslyn-keyword">string</span><span class="token punctuation roslyn-punctuation">></span><span class="token punctuation roslyn-punctuation">></span> <span class="token title.function roslyn-method-name">Get</span><span class="token punctuation roslyn-punctuation">(</span><span class="token punctuation roslyn-punctuation">)</span>
+        <span class="token punctuation roslyn-punctuation">{</span>
+            <span class="token keyword roslyn-keyword---control">return</span> <span class="token keyword roslyn-keyword">new</span> <span class="token keyword roslyn-keyword">string</span><span class="token punctuation roslyn-punctuation">[</span><span class="token punctuation roslyn-punctuation">]</span> <span class="token punctuation roslyn-punctuation">{</span> <span class="token string roslyn-string">"foo"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token string roslyn-string">"bar"</span> <span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">;</span>
+        <span class="token punctuation roslyn-punctuation">}</span>
+    <span class="token punctuation roslyn-punctuation">}</span>
+<span class="token punctuation roslyn-punctuation">}</span>
+</code></pre>
+<p>As you can see we have a method that returns a collection of string. We've decorated
+the method with two additional attributes that tells <code>Swashbuckle</code> that this method
+will return a collection of strings if the HTTP response code is <code>200</code>. We're also
+setting an <a href="">Swagger operation ID</a> for the method that will be used when we generate
+our client.</p>
+<h3 id="wiring-up-the-api">Wiring up the API</h3>
+<p>We now have a controller that's decorated with the necessary attributes for <code>Swashbuckle</code>
+to generate a Swagger specification from it. We now have to wire everything up in the
+<code>Startup.cs</code> file.</p>
+<p>In the <code>ConfigureServices</code> method, add the following code that will tell <code>Swashbuckle</code> that
+we've annotated our controllers with annotations, and provide some metadata for the API.</p>
+<pre><code class=""><span class="token symbol roslyn-identifier">services</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">AddSwaggerGen</span><span class="token punctuation roslyn-punctuation">(</span><span class="token property roslyn-parameter-name">c</span> <span class="token operator roslyn-operator">=></span>
+<span class="token punctuation roslyn-punctuation">{</span>
+    <span class="token property roslyn-parameter-name">c</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">EnableAnnotations</span><span class="token punctuation roslyn-punctuation">(</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+    <span class="token property roslyn-parameter-name">c</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">SwaggerDoc</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"v1"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token keyword roslyn-keyword">new</span> <span class="token symbol roslyn-identifier">Info</span>
+    <span class="token punctuation roslyn-punctuation">{</span>
+        <span class="token symbol roslyn-identifier">Title</span> <span class="token operator roslyn-operator">=</span> <span class="token string roslyn-string">"Sample API"</span><span class="token punctuation roslyn-punctuation">,</span>
+        <span class="token symbol roslyn-identifier">Version</span> <span class="token operator roslyn-operator">=</span> <span class="token string roslyn-string">"v1"</span>
+    <span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+<span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+</code></pre>
+<p>We now have to add the <code>Swashbuckle</code> middleware to our application pipeline which we do by
+adding the following code last in the <code>Configure</code> method. You can also (optionally) add
+the UI, but this is not required for what we're trying to achieve.</p>
+<pre><code class=""><span class="token symbol roslyn-identifier">app</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">UseSwagger</span><span class="token punctuation roslyn-punctuation">(</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+
+<span class="token comment roslyn-comment">// Optional</span>
+<span class="token symbol roslyn-identifier">app</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">UseSwaggerUI</span><span class="token punctuation roslyn-punctuation">(</span><span class="token property roslyn-parameter-name">c</span> <span class="token operator roslyn-operator">=></span>
+<span class="token punctuation roslyn-punctuation">{</span>
+    <span class="token property roslyn-parameter-name">c</span><span class="token operator roslyn-operator">.</span><span class="token symbol roslyn-identifier">SwaggerEndpoint</span><span class="token punctuation roslyn-punctuation">(</span><span class="token string roslyn-string">"/swagger/v1/swagger.json"</span><span class="token punctuation roslyn-punctuation">,</span> <span class="token string roslyn-string">"Sample API"</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+<span class="token punctuation roslyn-punctuation">}</span><span class="token punctuation roslyn-punctuation">)</span><span class="token punctuation roslyn-punctuation">;</span>
+</code></pre>
+<p>If you run the project and navigate to <code>/swagger/v1/swagger.json</code>, you will see
+the generated Swagger specification that represents our API.</p>
+<h3 id="modifying-the-client-project">Modifying the client project</h3>
+<p>The last thing we need to do before actually generating a client is to add a
+reference to the <code>Microsoft.Rest.ClientRuntime</code> NuGet package in the <code>Sample.Client</code> project.
+This package contains everything that a generated <code>AutoRest</code> client requires to work.</p>
+<h2 id="generating-the-client-code">Generating the client code</h2>
+<p>Now we want to start generating the client code, but we don't want to get the Swagger
+document by starting the API and retrieving it. It's absolutely possible but will be hard
+to automate.</p>
+<p>It's here the <code>Swashbuckle.AspNetCore.Cli</code> package comes into play.<br>
+What this package does is to allow to generate the Swagger document from a built assembly
+instead of invoking the Swagger endpoint of our API project.</p>
+<p>What we need to do now is:</p>
+<ol>
+<li>Build the Sample.API project.</li>
+<li>Generate the Swagger definition from the built assembly.</li>
+<li>Generate the client from the Swagger definition using <code>AutoRest</code>.</li>
+</ol>
+<p>Like I mentioned before, we're going to use PowerShell to do this, so go ahead and create
+a <code>Generate.ps1</code> file in the root of our project structure. The file should look like following:</p>
+<pre><code class="language-powershell">Set-Location src
+
+# Build project.
+dotnet build
+
+# Create the Swagger file from the API assembly.
+Set-Location Sample.Api
+dotnet swagger &quot;tofile&quot; --output &quot;../../res/swagger.json&quot; &quot;../Sample.Api/bin/Debug/netcoreapp2.1/Sample.Api.dll&quot; v1
+Set-Location ..
+
+# Clear the previously generated code.
+Remove-Item &quot;Sample.Client/Generated&quot; -Force -Recurse
+
+# Generate a C# client from the Swagger definition and
+# override the namespace and the client name.
+autorest --input-file=&quot;../res/swagger.json&quot; `
+         --output-folder=&quot;Sample.Client/Generated&quot; `
+         --namespace=&quot;Sample.Client&quot; `
+         --override-client-name=&quot;SampleClient&quot; `
+         --csharp
+
+# Reset the location.
+Set-Location ..
+</code></pre>
+<p>By running this script you should find a folder called <code>Generated</code> in the Client project
+containing the API client.</p>
+<p>All classes are partial (as well as some methods) so if you need to inject your own logic
+or change some behavior (such as authentication), you have the possibility to do so.</p>
+<h2 id="closing-up">Closing up</h2>
+<p>This tutorial just goes through the basics of how to generate an API client, but there is
+a myriad of other options that you can use to customize the generated client to your
+exact needs. I've personally haven't encountered a single scenario that couldn't be solved
+by one of the extensibility points in the generated code.</p>
+<p>I also recommend you to always commit the generated Swagger file as part of your repository.
+That way you always have a way to quickly regenerate the client if you manage to break something.</p>
+<p>You can find the source code to this blog post at
+<a href="https://github.com/patriksvensson/autorest-example">https://github.com/patriksvensson/autorest-example</a></p>
+
+</article>
+
+
+</main>
+
+<footer>
+    <span class="mx-auto  text-base-800 dark:text-base-200 py-4 max-w-4xl block text-sm font-light text-center">
+        &copy; Patrik Svensson<br>
+        Blog design by <a class="text-blue-700 dark:text-blue-300" href="https://github.com/phil-scott-78/thirty25-statiq">Phil Scott</a> 
+        | Built with <a class="text-blue-700 dark:text-blue-300" href="https://statiq.dev/">Statiq</a>
+    </span>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js" integrity="sha512-pSVqGtpGygQlhN8ZTHXx1kqkjQr30eM+S6OoSzhHGTjh6DKdfy7WZlo1DNO9bhtM0Imf6xNLznZ7iVC2YUMwJQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha512-GP4x8UWxWyh4BMbyJGOGneiTbkrWEF5izsVJByzVLodP8CuJH/n936+yQDMJJrOPUHLgyPbLiGw2rXmdvGdXHA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+            function swapTheme(){
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                }                
+            }
+        </script>
+
+</body></html>
