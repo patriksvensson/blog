@@ -1,0 +1,20 @@
+{
+  "name": "blog",
+  "version": "1.0.0",
+  "description": "Patrik's blog'",
+  "main": "index.js",
+  "scripts": {
+    "build:tailwind": "tailwind build -i ./input/tailwind.css  -c ./input/tailwind.config.js  -o ./public/assets/styles.css"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.2",
+    "autoprefixer": "^10.2.6",
+    "if-env": "^1.0.4",
+    "tailwindcss": "^3.0.23"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}

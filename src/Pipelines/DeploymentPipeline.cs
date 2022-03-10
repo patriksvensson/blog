@@ -1,11 +1,9 @@
-using Statiq.Common;
+    using Statiq.Common;
 using Statiq.Core;
 using Statiq.Markdown;
 using Statiq.Web.GitHub;
 using Statiq.Yaml;
 
-namespace site.Pipelines
-{
     public class DeploymentPipeline : Pipeline
     {
         public DeploymentPipeline()
@@ -21,4 +19,3 @@ namespace site.Pipelines
             };
         }
     }
-}

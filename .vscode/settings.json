@@ -1,8 +1,9 @@
 {
     "files.exclude": {
-        ".vscode": true,
+        ".vscode": false,
         "bin": true,
         "LICENSE": true,
+        "node_modules": true,
         "obj": true,
         "cache": true,
         "temp": true,

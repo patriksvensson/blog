@@ -1,0 +1,8 @@
+﻿Title: Latest blog posts
+HideTitle: true
+ArchiveSources: => $"posts/**/*"
+ArchiveDestination: >
+  => GetInt("Index") <= 1 ? $"index.html" : $"archive/{GetInt("Index")}/index.html"
+ArchivePageSize: => @Constants.PostsPerPage
+ArchiveOrderKey: date
+ArchiveOrderDescending: true

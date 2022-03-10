@@ -1,34 +1,39 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Statiq.App;
 using Statiq.Common;
 using Statiq.Feeds;
 using Statiq.Web;
+using Statiq.Web.Pipelines;
 
-namespace site
-{
-    internal static class Program
+var dotnetPath = System.Environment.GetEnvironmentVariable("DOTNET_PATH") ?? "dotnet";
+
+await Bootstrapper.Factory
+    .CreateWeb(args)
+    .SetOutputPath("public")
+    .AddSetting(Constants.Deployment.Owner, "patriksvensson")
+    .AddSetting(Constants.Deployment.Repository, "blog")
+    .AddSetting(Constants.Deployment.TargetBranch, "master")
+    .AddSetting(Keys.LinkLowercase, true)
+    .AddSetting(Keys.LinksUseHttps, true)
+    .AddSetting(Keys.Host, "patriksvensson.se")
+    .AddSetting(Keys.Title, "Patrik Svensson")
+    .AddSetting(FeedKeys.Author, "Patrik Svensson")
+    .AddSetting(FeedKeys.Description,
+        "This is my blog, where I write about stuff that interests me such as .NET, " +
+        "Rust, DevOps and technology in general. I am a husband and a father, " +
+        "and I enjoy contributing to Open Source projects.")
+    .AddSetting(FeedKeys.Copyright, DateTime.UtcNow.Year.ToString())
+    .AddShortcode<FullUrlShortCode>("FullUrl")
+    .ModifyPipeline(nameof(Content), pipeline =>
     {
-        private static Task<int> Main(string[] args)
-        {
-            return Bootstrapper
-                .Factory
-                .CreateDefault(args)
-                .AddHostingCommands()
-                .AddSetting(Constants.Deployment.Owner, "patriksvensson")
-                .AddSetting(Constants.Deployment.Repository, "blog")
-                .AddSetting(Constants.Deployment.TargetBranch, "master")
-                .AddSetting(Keys.LinkLowercase, true)
-                .AddSetting(Keys.LinksUseHttps, true)
-                .AddSetting(Keys.Host, "patriksvensson.se")
-                .AddSetting(Keys.Title, "Patrik Svensson")
-                .AddSetting(FeedKeys.Author, "Patrik Svensson")
-                .AddSetting(FeedKeys.Description, 
-                    "This is my blog, where I write about stuff that interests me such as .NET, " +
-                    "Rust, DevOps and technology in general. I am a husband and a father, " +
-                    "and I enjoy contributing to Open Source projects.")
-                .AddSetting(FeedKeys.Copyright, DateTime.UtcNow.Year.ToString())
-                .RunAsync();
-        }
-    }
-}
+        pipeline.PostProcessModules.Add(new RoslynHighlightModule());
+    })
+    .AddProcess(ProcessTiming.Initialization,
+        _ => new ProcessLauncher("npm", "install") { LogErrors = false })
+    .AddProcess(ProcessTiming.Initialization,
+        _ => new ProcessLauncher(dotnetPath, "tool restore") { LogErrors = false })
+    .AddProcess(ProcessTiming.Initialization,
+        _ => new ProcessLauncher(dotnetPath, "tool run playwright install chromium") { LogErrors = false })
+    .AddProcess(ProcessTiming.AfterExecution,
+        _ => new ProcessLauncher("npm", "run", "build:tailwind") { LogErrors = false, })
+    .RunAsync();
