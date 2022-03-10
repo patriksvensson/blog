@@ -32,5 +32,7 @@ await Bootstrapper.Factory
     .AddProcess(ProcessTiming.Initialization,
         _ => new ProcessLauncher(dotnetPath, "tool run playwright install chromium") { LogErrors = false })
     .AddProcess(ProcessTiming.AfterExecution,
-        _ => new ProcessLauncher("npm", "run", "build:tailwind") { LogErrors = false, })
+        _ => new ProcessLauncher("npm", "run", "build:tailwind") { LogErrors = false, LogOutput = true, })
+    .AddProcess(ProcessTiming.BeforeDeployment,
+        _ => new ProcessLauncher("npm", "run", "build:tailwind") { LogErrors = false, LogOutput = true, })
     .RunAsync();

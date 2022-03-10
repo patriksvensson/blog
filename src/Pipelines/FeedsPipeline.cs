@@ -17,7 +17,7 @@ public class FeedsPipeline : Pipeline
             new GenerateFeeds()
                 .WithItemDescription(Config.FromDocument(doc => doc.GetString("Excerpt")))
                 .WithRssPath(new NormalizedPath("rss.xml"))
-                .WithAtomPath(new NormalizedPath("feed.xml"))
+                .WithAtomPath(new NormalizedPath("feed.atom"))
         };
 
         OutputModules = new ModuleList
