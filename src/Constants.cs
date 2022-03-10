@@ -2,6 +2,8 @@
 {
     public const int PostsPerPage = 10;
 
+    public const string Draft = nameof(Draft);
+
     public const string BlogTitle = "Patrik Svensson";
     public const string Description = "Patrik Svensson's blog";
     public const string Creator = "@patriksvensson";
