@@ -15,10 +15,6 @@ await Bootstrapper.Factory
     .AddSetting(Keys.Host, "patriksvensson.se")
     .AddSetting(Keys.Title, "Patrik Svensson")
     .AddSetting(FeedKeys.Author, "Patrik Svensson")
-    .AddSetting(FeedKeys.Description,
-        "This is my blog, where I write about stuff that interests me such as .NET, " +
-        "Rust, DevOps and technology in general. I am a husband and a father, " +
-        "and I enjoy contributing to Open Source projects.")
     .AddSetting(FeedKeys.Copyright, DateTime.UtcNow.Year.ToString())
     .AddShortcode<FullUrlShortCode>("FullUrl")
     .ModifyPipeline(nameof(Content), pipeline =>
