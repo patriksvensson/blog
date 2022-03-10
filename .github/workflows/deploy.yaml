@@ -8,11 +8,20 @@ jobs:
     name: Deploy
     if: "!contains(github.event.head_commit.message, 'skip-ci')"
     runs-on: windows-latest
+
     steps:
-    - uses: actions/checkout@master
-    - uses: actions/setup-dotnet@v1
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '6.0.100'
-    - run: dotnet run -- deploy
+
+    - name: Publish
+      shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NETLIFY_ACCESS_TOKEN: ${{ secrets.NETLIFY_ACCESS_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      run: dotnet run -- deploy
