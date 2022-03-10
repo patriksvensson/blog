@@ -11,9 +11,7 @@
 
     public static class Deployment
     {
-        public const string Owner = "DEPLOYMENT_OWNER";
-        public const string Repository = "DEPLOYMENT_REPOSITORY";
-        public const string GitHubToken = "GITHUB_TOKEN";
-        public const string TargetBranch = "DEPLOYMENT_TARGET_BRANCH";
+        public const string NetlifySiteId = "NETLIFY_SITE_ID";
+        public const string NetlifyAccessToken = "NETLIFY_ACCESS_TOKEN";
     }
 }

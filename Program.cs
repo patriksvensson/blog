@@ -10,9 +10,6 @@ var dotnetPath = System.Environment.GetEnvironmentVariable("DOTNET_PATH") ?? "do
 await Bootstrapper.Factory
     .CreateWeb(args)
     .SetOutputPath("public")
-    .AddSetting(Constants.Deployment.Owner, "patriksvensson")
-    .AddSetting(Constants.Deployment.Repository, "blog")
-    .AddSetting(Constants.Deployment.TargetBranch, "master")
     .AddSetting(Keys.LinkLowercase, true)
     .AddSetting(Keys.LinksUseHttps, true)
     .AddSetting(Keys.Host, "patriksvensson.se")
