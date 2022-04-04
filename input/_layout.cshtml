@@ -44,7 +44,7 @@
 
     @RenderSection("head", required: false)
 </head>
-<body class="antialiased text-base-800 bg-base-800/10 dark:bg-base-800 transition-colors">
+<body class="antialiased text-base-800 bg-base-800/10 dark:bg-base-800 transition-colors" onload="updateTheme()">
 <header class="sticky top-0 left-2 w-full backdrop-blur bg-base-100/80 dark:bg-base-800/80 border-b border-base-900/20 dark:border-base-50/10 shadow-md dark:shadow-lg py-2 md:py-4 z-50">
     <nav class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 flex  items-center">
         <h1>
@@ -80,14 +80,12 @@
 
     <nav class="mx-auto max-w-5xl px-4 md:px-8 xl:px-0 py-1 flex items-center">
         <a class="text-base-500 hover:text-blue-400 transition-all mr-4" href="/about">About</a>
-        <a class="text-base-500 hover:text-blue-400 transition-all" href="https://github.com/sponsors/patriksvensson">Sponsor me</a>
+        <a class="text-base-500 hover:text-blue-400 transition-all mr-4" href="https://github.com/sponsors/patriksvensson">Sponsor me</a>
 
         <div class="ml-auto flex items-center">
-        <button aria-label="Toggle Dark Mode" class="ml-2 text-yellow-600 dark:text-base-500 stroke-1 opacity-80" style="padding-right: 2px;" onclick="swapTheme()">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-        </button>
+            <button aria-label="Toggle Dark Mode" class="text-yellow-600 dark:text-base-500 stroke-1 opacity-80" style="padding-right: 2px;" onclick="swapTheme()">
+                <span id="currentTheme" class="color: currentColor"></span>
+            </button>
         </div>
     </nav>
 </header>
@@ -114,15 +112,26 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha512-GP4x8UWxWyh4BMbyJGOGneiTbkrWEF5izsVJByzVLodP8CuJH/n936+yQDMJJrOPUHLgyPbLiGw2rXmdvGdXHA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
-            function swapTheme(){
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.theme = 'light';
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.theme = 'dark';
-                }                
-            }
-        </script>
+    function updateTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.getElementById('currentTheme').innerHTML = "Dark theme";
+        } else {
+            document.getElementById('currentTheme').innerHTML = "Light theme";
+        }
+    }
+
+    function swapTheme(){
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+
+        updateTheme();
+    }
+</script>
+
 </body>
 </html>
