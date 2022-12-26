@@ -1,0 +1,3 @@
+# Mastodon
+/.well-known/webfinger  /well-known/webfinger?resource=acct:patrik@patriksvensson.se
+/.well-known/webfinger?resource=acct:patrik@patriksvensson.se  /well-known/webfinger?resource=acct:patrik@patriksvensson.se
