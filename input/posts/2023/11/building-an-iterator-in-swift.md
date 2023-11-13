@@ -67,7 +67,7 @@ extension Sequence {
 }
 ```
 
-Now, I can easily iterate over any structure by calling makeSequenceIterator:
+Now, I can easily iterate over any structure by calling `makeSequenceIterator`:
 
 ```swift
 let foo = ["A", "B", "C", "D"]
