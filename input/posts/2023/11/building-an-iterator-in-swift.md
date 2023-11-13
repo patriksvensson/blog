@@ -35,22 +35,23 @@ public struct SequenceIterator<T: IteratorProtocol> : IteratorProtocol, Sequence
     }
 
     public mutating func next() -> (index: Int, first: Bool, last: Bool,  item: T.Element)? {
-        // Nothing more to yield?
-        guard self.current != nil else {
-            return Optional.none
+        guard let current else {
+            return .none
         }
-        
-        let current = self.current.unsafelyUnwrapped
+
         let next = self.items.next()
         
-        let valueToReturn =
-            (index: self.index, first: self.first, last: next == nil, item: current)
-
-        self.index += 1
-        self.current = next
-        self.first = false;
-
-        return Optional.some(valueToReturn)
+        defer {
+            self.current = next
+            self.first = false
+            self.index += 1
+        }
+        
+        return (
+            index: self.index, 
+            first: self.first, 
+            last: next == nil, 
+            item: current)
     }
 }
 ```
