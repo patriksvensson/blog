@@ -13,28 +13,28 @@ Something extensively used in the project is an extension method that provides i
 <!--excerpt-->
 
 ```csharp
-IEnumerable<(int index, bool first, bool last, T item)> Enumerate<T>(this IEnumerable<T> source);
+IEnumerable<(int index, bool isFirst, bool isLast, T item)> Enumerate<T>(this IEnumerable<T> source);
 ```
 
 So, yesterday evening, I sat down to try to port this to Swift and make it as idiomatic as possible (to the extent of my understanding of Swift).
 
 ```swift
 public struct SequenceIterator<T: IteratorProtocol> : IteratorProtocol, Sequence {
-    public typealias Element = (index: Int, first: Bool, last: Bool,  item: T.Element)
+    public typealias Element = (index: Int, isFirst: Bool, isLast: Bool, item: T.Element)
     
     var items: T
     var current: T.Element?
     var index: Int
-    var first: Bool
+    var isFirst: Bool
 
     public init(iterator: T) {
         self.items = iterator
         self.current = self.items.next()
         self.index = 0
-        self.first = true
+        self.isFirst = true
     }
 
-    public mutating func next() -> (index: Int, first: Bool, last: Bool,  item: T.Element)? {
+    public mutating func next() -> (index: Int, isFirst: Bool, isLast: Bool, item: T.Element)? {
         guard let current else {
             return .none
         }
@@ -43,14 +43,14 @@ public struct SequenceIterator<T: IteratorProtocol> : IteratorProtocol, Sequence
         
         defer {
             self.current = next
-            self.first = false
+            self.isFirst = false
             self.index += 1
         }
         
         return (
             index: self.index, 
-            first: self.first, 
-            last: next == nil, 
+            isFirst: self.isFirst, 
+            isLast: next == nil, 
             item: current)
     }
 }
@@ -73,13 +73,13 @@ Now, I can easily iterate over any structure by calling `makeSequenceIterator`:
 ```swift
 let foo = ["A", "B", "C", "D"]
 
-for (index, first, last, item) in foo.makeSequenceIterator() {
+for (index, isFirst, isLast, item) in foo.makeSequenceIterator() {
     print("Index: \(index)")
-    print("First: \(first)")
-    print("Last: \(last)")
+    print("First: \(isFirst)")
+    print("Last: \(isLast)")
     print("Item: \(item)")
     
-    if !last {
+    if !isLast {
         print("--------------------")
     }
 }
