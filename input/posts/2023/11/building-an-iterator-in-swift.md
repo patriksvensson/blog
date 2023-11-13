@@ -6,6 +6,12 @@ Tags:
 - Swift
 ---
 
+<div class="flex mt-4 md:mt-4 mb-4 p-4 border border-primary-400/50  bg-primary-200/50 dark:border-primary-800 dark:bg-primary-700/50 shadow-md rounded-md items-center">
+    <p class="ml-4 text-base-700 dark:text-primary-300 text-xs md:text-sm">
+        <b>EDIT:</b> Thanks to <a href="https://github.com/idrougge" class="font-normal">Iggy Drougge</a> and 
+        <a href="https://github.com/Optiroc" class="font-normal">David Lindecrantz</a> for suggestions and feedback!</p>
+</div>
+
 As part of learning Swift, I decided to port my project [Spectre.Console](https://spectreconsole.net/) (written in C#) to [Swift](https://www.swift.org/).
 
 Something extensively used in the project is an extension method that provides information about whether the item being iterated over is the first or last in the collection, as well as its index.
@@ -13,7 +19,7 @@ Something extensively used in the project is an extension method that provides i
 <!--excerpt-->
 
 ```csharp
-IEnumerable<(int index, bool isFirst, bool isLast, T item)> Enumerate<T>(this IEnumerable<T> source);
+IEnumerable<(int index, bool isFirst, bool isLast, T item)> Enumerate<T>(this IEnumerable<T> source)
 ```
 
 So, yesterday evening, I sat down to try to port this to Swift and make it as idiomatic as possible (to the extent of my understanding of Swift).
