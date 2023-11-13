@@ -28,24 +28,22 @@ So, yesterday evening, I sat down to try to port this to Swift and make it as id
 public struct SequenceIterator<T: IteratorProtocol> : IteratorProtocol, Sequence {
     public typealias Element = (index: Int, isFirst: Bool, isLast: Bool, item: T.Element)
     
-    var items: T
-    var current: T.Element?
-    var index: Int
-    var isFirst: Bool
+    private var iterator: T
+    private var current: T.Element?
+    private var index = 0
+    private var isFirst = true
 
     public init(iterator: T) {
-        self.items = iterator
-        self.current = self.items.next()
-        self.index = 0
-        self.isFirst = true
+        self.iterator = iterator
+        self.current = self.iterator.next()
     }
 
     public mutating func next() -> (index: Int, isFirst: Bool, isLast: Bool, item: T.Element)? {
         guard let current else {
-            return .none
+            return nil
         }
 
-        let next = self.items.next()
+        let next = iterator.next()
         
         defer {
             self.current = next
