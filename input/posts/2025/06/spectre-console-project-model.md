@@ -19,7 +19,7 @@ Of course, not all issues and pull requests are like this (far from it), but the
 
 About a year ago, I was granted access to the beta of [Ghostty][4] and noticed that they approach issue and PR management differently from most open source projects. Mitchell Hashimoto later [elaborated on this approach on Twitter][5].
 
-In summary, they have disabled issues and pull requests entirely, relying instead on GitHub Discussions. Only when a bug discussed in a thread is deemed reproducible, or when a feature idea is considered sufficiently mature, do they create an issue with a complete description. All pull requests must have an associated issue. If someone opens an issue without a prior discussion that has been approved by a maintainer, the issue is promptly closed.
+In summary, they have moved away from receiving bug reports and feature requests via GitHub issues, relying instead on GitHub Discussions. Only when a bug discussed in a thread is deemed reproducible, or when a feature idea is considered sufficiently mature, do they create an issue with a complete description. All pull requests must have an associated issue. If someone opens an issue without a prior discussion that has been approved by a maintainer, the issue is promptly closed.
 
 This policy has resulted in all [issues within Ghostty being well-defined][6] and containing all the necessary information to implement a solution.
 
