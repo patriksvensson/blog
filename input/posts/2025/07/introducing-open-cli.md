@@ -20,7 +20,7 @@ To paraphrase the specification:
 
 > The OpenCLI specification (OCS) defines a standard, platform and language-agnostic interface to CLI applications, which allows both humans and computers to understand how a CLI tool should be invoked without access to source code or documentation.
 
-I genuinely believe that today, especially with the growing interest in MCP and CLI automation, there's huge potential in standardizing how we describe command-line applications.
+I genuinely believe that today, especially with the growing interest in [MCP (Model Context Protocol)][6] and CLI automation, there's huge potential in standardizing how we describe command-line applications.
 
 If you think this is a good idea or have thoughts, suggestions, or feedback, please don't hesitate to reach out.  
 I'm interested in collaborating with anyone who is interested in this topic!
@@ -33,3 +33,4 @@ https://github.com/spectreconsole/open-cli
 [3]: https://spectreconsole.net/cli/
 [4]: https://spec.openapis.org/
 [5]: https://opencli.org
+[6]: https://modelcontextprotocol.io
