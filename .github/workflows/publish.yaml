@@ -59,12 +59,6 @@ jobs:
         run: |
           dotnet build src/Blog.slnx
 
-      - name: Install Playwright.NET
-        uses: phil-scott-78/setup-playwright-dotnet@v0.1.0-alpha
-        with:
-          global-json-file: global.json
-          browsers: 'chromium'
-
       - name: Run webapp and generate static files
         run: |
           dotnet run --project ${{ env.WEBAPP_PATH }}${{env.WEBAPP_CSPROJ}} --configuration Release -- build
