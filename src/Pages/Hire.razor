@@ -1,0 +1,62 @@
+@layout ContentWithProseLayout
+@page "/hire"
+@using MyLittleContentEngine.BlogSite.Components
+@using MyLittleContentEngine.BlogSite.Components.Layout
+
+<h1>Want to hire me?</h1>
+
+<p>
+    I’m currently available for consulting, contract work, and staff engineer–level roles.
+</p>
+
+<p class="mb-4">
+    I have more than 20 years of professional experience in software development, designing and building tools,
+    platforms,
+    and production systems. I’m an active open source contributor and creator of widely used projects in the .NET
+    ecosystem,
+    including <a href="https://cakebuild.net">Cake</a> and <a href="https://spectreconsole.net">Spectre.Console</a>.
+    I’m also the author of the <a href="https://opencli.org">OpenCLI specification</a>.
+</p>
+
+<p>
+    <b>My work in the developer community has been recognized with eight Microsoft MVP awards and three GitHub Star
+        awards.</b>
+    My open source projects are used by organizations such as Microsoft, Amazon, IBM, NASA, and GitHub.
+</p>
+
+<p>
+    I’m particularly interested in roles where I can contribute at a technical leadership level,
+    helping teams with architecture, developer tooling, .NET development, and improving overall developer experience.
+    I enjoy solving complex technical problems, guiding engineering direction, and building systems that are robust
+    and maintainable.
+</p>
+
+<p>
+    If you think my experience could help your team or project, feel free to get in touch.
+</p>
+
+<div
+    class="hidden lg:block rounded-2xl border border-base-200/90 dark:border-base-700/50  text-primary-600 dark:text-primary-50 p-6 mb-6 ">
+    <div class="flex flex-col">
+        <p class="mb-0 mt-0 pb-0">LinkedIn: <a href="https://www.linkedin.com/in/psvensson82/">https://www.linkedin.com/in/psvensson82/</a></p>
+        <p class="mb-0 mt-0 pb-0">Email: <a href="">patrik@patriksvensson.se</a></p>
+    </div>
+</div>
+
+@* PDF viewer *@
+<div id="pdf-viewer" style="height: 100vh"></div>
+
+<script type="module">
+    import EmbedPDF from 'https://cdn.jsdelivr.net/npm/@@embedpdf/snippet@2/dist/embedpdf.js';
+
+    EmbedPDF.init({
+        type: 'container',
+        target: document.getElementById('pdf-viewer'),
+        src: '/media/patriksvensson.pdf',
+        theme: {preference: 'system'},
+        disabledCategories: ['annotation', 'redaction', 'sidebars']
+    });
+</script>
+
+@code {
+}

@@ -1,0 +1,6 @@
+# Redirect mappings for blog
+# Maps old patriksvensson.se URLs to new Diátaxis-structured content
+
+redirects:
+# Blog Section
+/posts: /blog

@@ -1,0 +1,112 @@
+name: Build and publish to GitHub Pages
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  ASPNETCORE_ENVIRONMENT: Production
+  WEBAPP_PATH: ./src/
+  WEBAPP_CSPROJ: Blog.csproj
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cache .NET packages and NuGet cache
+      - name: Cache .NET packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+            ~/.dotnet
+          key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj', '**/global.json', '**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-dotnet-
+      
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Cache Playwright browsers
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/AppData/Local/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Build the Project
+        run: |
+          dotnet build
+
+      - name: Install Playwright.NET
+        uses: phil-scott-78/setup-playwright-dotnet@v0.1.0-alpha
+        with:
+          global-json-file: global.json
+          browsers: 'chromium'
+
+      - name: Run webapp and generate static files
+        run: |
+          dotnet run --project ${{ env.WEBAPP_PATH }}${{env.WEBAPP_CSPROJ}} --configuration Release -- build
+
+      - name: Install minify
+        run: |
+          curl -sfL https://github.com/tdewolff/minify/releases/latest/download/minify_linux_amd64.tar.gz | tar -xzf - -C /tmp
+          sudo mv /tmp/minify /usr/local/bin/
+
+      - name: Minify CSS and JavaScript files
+        run: |
+          # Find and minify all CSS files
+          find "${{ env.WEBAPP_PATH }}output" -type f -name "*.css" | while read cssfile; do
+            /usr/local/bin/minify -o "$cssfile" "$cssfile"
+            echo "Minified $cssfile"
+          done
+
+          # Find and minify all JavaScript files
+          find "${{ env.WEBAPP_PATH }}output" -type f -name "*.js" | while read jsfile; do
+            /usr/local/bin/minify -o "$jsfile" "$jsfile"
+            echo "Minified $jsfile"
+          done
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Add .nojekyll file
+        run: touch ${{ env.WEBAPP_PATH }}output/.nojekyll
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.WEBAPP_PATH }}output
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
