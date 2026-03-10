@@ -57,7 +57,7 @@ jobs:
 
       - name: Build the Project
         run: |
-          dotnet build
+          dotnet build src/Blog.slnx
 
       - name: Install Playwright.NET
         uses: phil-scott-78/setup-playwright-dotnet@v0.1.0-alpha
