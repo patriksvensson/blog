@@ -3,7 +3,6 @@ title: Generating API clients using AutoRest
 description: This blog post looks at automatically generating an HTTP API client from a OpenAPI specification (formerly swagger) using AutoRest.
 slug: generating-api-clients-using-autorest
 date: 2018-10-02
-RedirectFrom: 2018/10/generating-api-clients-using-autorest/index.html
 tags:
 - C#
 - AutoRest
@@ -124,7 +123,7 @@ namespace Sample.Api.Controllers
 As you can see we have a method that returns a collection of string. We've decorated
 the method with two additional attributes that tells `Swashbuckle` that this method
 will return a collection of strings if the HTTP response code is `200`. We're also
-setting an [Swagger operation ID]() for the method that will be used when we generate
+setting an Swagger operation ID for the method that will be used when we generate
 our client.
 
 ### Wiring up the API
